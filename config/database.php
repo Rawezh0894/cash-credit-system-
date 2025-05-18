@@ -7,8 +7,8 @@ class Database {
         try {
             $this->conn = new PDO(
                 "mysql:host=localhost;dbname=cash_credit_db;charset=utf8mb4",
-                "root",
-                "",
+                "warehouse_user",
+                "CashCredit@2025",
                 [
                     PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION,
                     PDO::ATTR_DEFAULT_FETCH_MODE => PDO::FETCH_ASSOC,

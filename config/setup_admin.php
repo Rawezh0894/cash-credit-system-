@@ -5,8 +5,8 @@ ini_set('display_errors', 1);
 // Database connection
 $host = 'localhost';
 $dbname = 'cash_credit_db';
-$username = 'root';
-$password = '';
+$username = 'warehouse_user';
+$password = 'CashCredit@2025';
 
 try {
     // Connect to database
