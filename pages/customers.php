@@ -74,49 +74,56 @@ if (isset($_SESSION['error_message'])) {
                                 <form id="customerAddForm" action="javascript:void(0);">
                                     <div class="row">
                                         <div class="col-md-6 mb-3">
+                                            <label for="customer_type_id" class="form-label">جۆری کڕیار</label>
+                                            <div class="input-group">
+                                                <div id="customer_type_select_add" class="flex-grow-1"></div>
+                                                <button type="button" class="btn btn-outline-primary ms-2" id="addCustomerTypeBtnAdd" data-bs-toggle="modal" data-bs-target="#addCustomerTypeModal" title="زیادکردنی جۆری نوێ"><i class="bi bi-plus"></i></button>
+                                            </div>
+                                        </div>
+                                        <div class="col-md-6 mb-3">
                                             <label for="name" class="form-label">ناوی کڕیار</label>
                                             <input type="text" class="form-control" id="name" name="name" value="" required>
                                         </div>
+                                    </div>
+                                    
+                                    <div class="row">
                                         <div class="col-md-6 mb-3">
                                             <label for="phone1" class="form-label">ژمارەی مۆبایلی یەکەم</label>
                                             <input type="text" class="form-control" id="phone1" name="phone1" value="" required>
                                         </div>
-                                    </div>
-                                    
-                                    <div class="row">
                                         <div class="col-md-6 mb-3">
                                             <label for="phone2" class="form-label">ژمارەی مۆبایلی دووەم (ئیختیاری)</label>
                                             <input type="text" class="form-control" id="phone2" name="phone2" value="">
                                         </div>
+                                    </div>
+                                    
+                                    <div class="row">
                                         <div class="col-md-6 mb-3">
                                             <label for="guarantor_name" class="form-label">ناوی کەفیل (ئیختیاری)</label>
                                             <input type="text" class="form-control" id="guarantor_name" name="guarantor_name" value="">
                                         </div>
-                                    </div>
-                                    
-                                    <div class="row">
                                         <div class="col-md-6 mb-3">
                                             <label for="guarantor_phone" class="form-label">ژمارەی مۆبایلی کەفیل (ئیختیاری)</label>
                                             <input type="text" class="form-control" id="guarantor_phone" name="guarantor_phone" value="">
                                         </div>
+                                    </div>
+                                    
+                                    <div class="row">
                                         <div class="col-md-6 mb-3">
                                             <label for="we_owe" class="form-label">بڕی قەرز</label>
                                             <input type="number" class="form-control" id="we_owe" name="owed_amount" value="0" step="0.01">
                                         </div>
-                                    </div>
-                                    
-                                    <div class="row">
                                         <div class="col-md-6 mb-3">
                                             <label for="advance_payment" class="form-label">بڕی پێشەکی</label>
                                             <input type="number" class="form-control" id="advance_payment" name="advance_payment" value="0" step="0.01">
                                         </div>
+                                    </div>
+                                    
+                                    <div class="row">
                                         <div class="col-md-6 mb-3">
                                             <label for="city" class="form-label">ناوی شار</label>
                                             <input type="text" class="form-control" id="city" name="city" value="" onchange="validateCityField(this)">
                                         </div>
-                                    </div>
-                                    
-                                    <div class="row">
                                         <div class="col-md-6 mb-3">
                                             <label class="form-label">شوێن</label>
                                             <div class="form-check">
@@ -157,49 +164,56 @@ if (isset($_SESSION['error_message'])) {
                                     
                                     <div class="row">
                                         <div class="col-md-6 mb-3">
+                                            <label for="edit_customer_type_id" class="form-label">جۆری کڕیار</label>
+                                            <div class="input-group">
+                                                <div id="customer_type_select_edit" class="flex-grow-1"></div>
+                                                <button type="button" class="btn btn-outline-primary ms-2" id="addCustomerTypeBtnEdit" data-bs-toggle="modal" data-bs-target="#addCustomerTypeModal" title="زیادکردنی جۆری نوێ"><i class="bi bi-plus"></i></button>
+                                            </div>
+                                        </div>
+                                        <div class="col-md-6 mb-3">
                                             <label for="edit_name" class="form-label">ناوی کڕیار</label>
                                             <input type="text" class="form-control" id="edit_name" name="name" value="" required>
                                         </div>
+                                    </div>
+                                    
+                                    <div class="row">
                                         <div class="col-md-6 mb-3">
                                             <label for="edit_phone1" class="form-label">ژمارەی مۆبایلی یەکەم</label>
                                             <input type="text" class="form-control" id="edit_phone1" name="phone1" value="" required>
                                         </div>
-                                    </div>
-                                    
-                                    <div class="row">
                                         <div class="col-md-6 mb-3">
                                             <label for="edit_phone2" class="form-label">ژمارەی مۆبایلی دووەم (ئیختیاری)</label>
                                             <input type="text" class="form-control" id="edit_phone2" name="phone2" value="">
                                         </div>
+                                    </div>
+                                    
+                                    <div class="row">
                                         <div class="col-md-6 mb-3">
                                             <label for="edit_guarantor_name" class="form-label">ناوی کەفیل (ئیختیاری)</label>
                                             <input type="text" class="form-control" id="edit_guarantor_name" name="guarantor_name" value="">
                                         </div>
-                                    </div>
-                                    
-                                    <div class="row">
                                         <div class="col-md-6 mb-3">
                                             <label for="edit_guarantor_phone" class="form-label">ژمارەی مۆبایلی کەفیل (ئیختیاری)</label>
                                             <input type="text" class="form-control" id="edit_guarantor_phone" name="guarantor_phone" value="">
                                         </div>
+                                    </div>
+                                    
+                                    <div class="row">
                                         <div class="col-md-6 mb-3">
                                             <label for="edit_we_owe" class="form-label">بڕی قەرز</label>
                                             <input type="number" class="form-control" id="edit_we_owe" name="owed_amount" value="0" step="0.01">
                                         </div>
-                                    </div>
-                                    
-                                    <div class="row">
                                         <div class="col-md-6 mb-3">
                                             <label for="edit_advance_payment" class="form-label">بڕی پێشەکی</label>
                                             <input type="number" class="form-control" id="edit_advance_payment" name="advance_payment" value="0" step="0.01">
                                         </div>
+                                    </div>
+                                    
+                                    <div class="row">
                                         <div class="col-md-6 mb-3">
                                             <label for="edit_city" class="form-label">ناوی شار</label>
                                             <input type="text" class="form-control" id="edit_city" name="city" value="" onchange="validateCityField(this)">
                                         </div>
-                                    </div>
-                                    
-                                    <div class="row">
                                         <div class="col-md-6 mb-3">
                                             <label class="form-label">شوێن</label>
                                             <div class="form-check">
@@ -240,24 +254,30 @@ if (isset($_SESSION['error_message'])) {
                         <!-- SELECT2 Filters -->
                         <div class="select2-filters-wrapper">
                             <div class="row">
-                                <div class="col-md-4 mb-2">
+                                <div class="col-md-3 mb-2">
                                     <label for="filter_name" class="form-label">فلتەر بە ناو:</label>
                                     <select id="filter_name" class="form-control select2-filter" data-column="1">
                                         <option value="">هەموو ناوەکان</option>
                                     </select>
                                 </div>
-                                <div class="col-md-4 mb-2">
+                                <div class="col-md-3 mb-2">
                                     <label for="filter_city" class="form-label">فلتەر بە شار:</label>
                                     <select id="filter_city" class="form-control select2-filter" data-column="5">
                                         <option value="">هەموو شارەکان</option>
                                     </select>
                                 </div>
-                                <div class="col-md-4 mb-2">
+                                <div class="col-md-3 mb-2">
                                     <label for="filter_location" class="form-label">فلتەر بە شوێن:</label>
                                     <select id="filter_location" class="form-control" data-column="6">
                                         <option value="">هەموو شوێنەکان</option>
                                         <option value="ناو شار">ناو شار</option>
                                         <option value="دەرەوەی شار">دەرەوەی شار</option>
+                                    </select>
+                                </div>
+                                <div class="col-md-3 mb-2">
+                                    <label for="filter_type" class="form-label">فلتەر بە جۆر:</label>
+                                    <select id="filter_type" class="form-control select2-filter" data-column="7">
+                                        <option value="">هەموو جۆرەکان</option>
                                     </select>
                                 </div>
                             </div>
@@ -324,6 +344,14 @@ if (isset($_SESSION['error_message'])) {
                                                 <div class="header-text">شوێن</div>
                                                 <div class="column-search">
                                                     <input type="text" class="form-control" placeholder="گەڕان بە شوێن..." onkeyup="filterTable(this, 6)">
+                                                </div>
+                                            </div>
+                                        </th>
+                                        <th class="border">
+                                            <div class="table-header-with-search">
+                                                <div class="header-text">جۆر</div>
+                                                <div class="column-search">
+                                                    <input type="text" class="form-control" placeholder="گەڕان بە جۆر..." onkeyup="filterTable(this, 7)">
                                                 </div>
                                             </div>
                                         </th>
@@ -398,5 +426,29 @@ if (isset($_SESSION['error_message'])) {
         showSwalAlert2('error', 'هەڵە!', <?php echo json_encode($error_message); ?>);
     <?php endif; ?>
     </script>
+
+    <!-- Add Customer Type Modal -->
+    <div class="modal fade" id="addCustomerTypeModal" tabindex="-1" aria-labelledby="addCustomerTypeModalLabel" aria-hidden="true">
+      <div class="modal-dialog">
+        <div class="modal-content">
+          <div class="modal-header">
+            <h5 class="modal-title" id="addCustomerTypeModalLabel">زیادکردنی جۆری کڕیار</h5>
+            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+          </div>
+          <div class="modal-body">
+            <form id="addCustomerTypeForm" action="javascript:void(0);">
+              <div class="mb-3">
+                <label for="new_customer_type_name" class="form-label">ناوی جۆر</label>
+                <input type="text" class="form-control" id="new_customer_type_name" name="type_name" required>
+              </div>
+            </form>
+          </div>
+          <div class="modal-footer">
+            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">پاشگەزبوونەوە</button>
+            <button type="button" class="btn btn-primary" id="saveCustomerTypeBtn">زیادکردن</button>
+          </div>
+        </div>
+      </div>
+    </div>
 </body>
 </html> 

@@ -96,7 +96,11 @@ try {
 
     foreach ($transactions as $transaction) {
         if ($transaction['type'] === 'credit') {
-            $total_credit += floatval($transaction['amount']);
+            // Only count remaining credit
+            $remaining = isset($transaction['paid_amount']) ? ($transaction['amount'] - $transaction['paid_amount']) : $transaction['amount'];
+            if ($remaining > 0) {
+                $total_credit += $remaining;
+            }
         } elseif ($transaction['type'] === 'cash') {
             $total_cash += floatval($transaction['amount']);
         } elseif ($transaction['type'] === 'advance') {
@@ -123,6 +127,13 @@ try {
             $transaction_files[$file['transaction_id']][] = $file;
         }
     }
+
+    // گەڕانەوەی collection/payment بۆ ئەم مامەڵەیە بە بەکارهێنانی paid_amount (FIFO)
+    foreach ($due_credit_transactions as &$transaction) {
+        $transaction['collected'] = $transaction['paid_amount'] ?? 0;
+        $transaction['remaining'] = $transaction['amount'] - $transaction['collected'];
+    }
+    unset($transaction);
 
 } catch (PDOException $e) {
     $_SESSION['error_message'] = 'هەڵە: ' . $e->getMessage();
@@ -296,6 +307,8 @@ try {
                                                 <th>بەرواری قەرز</th>
                                                 <th>کاتی دیاریکراو</th>
                                                 <th>ماوەی ماوە</th>
+                                                <th>پارەی گەڕاوە</th>
+                                                <th>باڵانسی ماوە</th>
                                                 <th>تێبینی</th>
                                                 <th>زیادکەر</th>
                                             </tr>
@@ -304,6 +317,7 @@ try {
                                             <?php 
                                             $counter = ($page - 1) * $records_per_page + 1;
                                             foreach ($due_credit_transactions as $transaction): 
+                                                if ($transaction['remaining'] <= 0) continue;
                                                 $due_date = new DateTime($transaction['due_date']);
                                                 $current_date = new DateTime();
                                                 $days_remaining = $current_date->diff($due_date)->days;
@@ -326,6 +340,8 @@ try {
                                                 <td><?php echo $transaction['date']; ?></td>
                                                 <td><?php echo $transaction['due_date']; ?></td>
                                                 <td><?php echo $days_remaining_text; ?></td>
+                                                <td><?php echo number_format($transaction['collected'], 0); ?></td>
+                                                <td><?php echo number_format($transaction['remaining'], 0); ?></td>
                                                 <td><?php echo !empty($transaction['notes']) ? htmlspecialchars($transaction['notes']) : '-'; ?></td>
                                                 <td><?php echo htmlspecialchars($transaction['creator_name']); ?></td>
                                             </tr>

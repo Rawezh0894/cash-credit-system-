@@ -55,40 +55,25 @@ try {
     $stmt->execute([$account_id]);
     $transactions = $stmt->fetchAll();
 
-    // Calculate statistics
-    $total_credit_sale = 0;
-    $total_credit_purchase = 0;
-    $total_cash_sale = 0;
-    $total_cash_purchase = 0;
-    $total_advance_sale = 0;
-    $total_advance_purchase = 0;
-    $total_payment_sale = 0;
-    $total_payment_purchase = 0;
-
+    // Calculate real-time statistics (FIFO)
+    $they_owe = 0;
+    $we_owe = 0;
+    $they_advance = 0;
+    $we_advance = 0;
     foreach ($transactions as $transaction) {
+        $paid = isset($transaction['paid_amount']) ? floatval($transaction['paid_amount']) : 0;
+        $remaining = floatval($transaction['amount']) - $paid;
         if ($transaction['type'] === 'credit') {
-            if ($transaction['direction'] === 'sale') {
-                $total_credit_sale += floatval($transaction['amount']);
-            } else {
-                $total_credit_purchase += floatval($transaction['amount']);
-            }
-        } elseif ($transaction['type'] === 'cash') {
-            if ($transaction['direction'] === 'sale') {
-                $total_cash_sale += floatval($transaction['amount']);
-            } else {
-                $total_cash_purchase += floatval($transaction['amount']);
+            if ($transaction['direction'] === 'sale' && $remaining > 0) {
+                $they_owe += $remaining;
+            } elseif ($transaction['direction'] === 'purchase' && $remaining > 0) {
+                $we_owe += $remaining;
             }
         } elseif ($transaction['type'] === 'advance') {
-            if ($transaction['direction'] === 'sale') {
-                $total_advance_sale += floatval($transaction['amount']);
-            } else {
-                $total_advance_purchase += floatval($transaction['amount']);
-            }
-        } elseif ($transaction['type'] === 'payment') {
-            if ($transaction['direction'] === 'sale') {
-                $total_payment_sale += floatval($transaction['amount']);
-            } else {
-                $total_payment_purchase += floatval($transaction['amount']);
+            if ($transaction['direction'] === 'sale' && $remaining > 0) {
+                $they_advance += $remaining;
+            } elseif ($transaction['direction'] === 'purchase' && $remaining > 0) {
+                $we_advance += $remaining;
             }
         }
     }
@@ -177,7 +162,7 @@ try {
                                         </div>
                                         <div class="summary-data">
                                             <span class="summary-label">ئەوان قەرزارن</span>
-                                            <span class="summary-value"><?php echo number_format($account['they_owe'], 0); ?></span>
+                                            <span class="summary-value"><?php echo number_format($they_owe, 0); ?></span>
                                         </div>
                                     </div>
                                 </div>
@@ -188,7 +173,7 @@ try {
                                         </div>
                                         <div class="summary-data">
                                             <span class="summary-label">ئێمە قەرزارین</span>
-                                            <span class="summary-value"><?php echo number_format($account['we_owe'], 0); ?></span>
+                                            <span class="summary-value"><?php echo number_format($we_owe, 0); ?></span>
                                         </div>
                                     </div>
                                 </div>
@@ -199,7 +184,7 @@ try {
                                         </div>
                                         <div class="summary-data">
                                             <span class="summary-label">پێشەکی ئەوان</span>
-                                            <span class="summary-value"><?php echo number_format($account['they_advance'], 0); ?></span>
+                                            <span class="summary-value"><?php echo number_format($they_advance, 0); ?></span>
                                         </div>
                                     </div>
                                 </div>
@@ -210,7 +195,7 @@ try {
                                         </div>
                                         <div class="summary-data">
                                             <span class="summary-label">پێشەکی ئێمە</span>
-                                            <span class="summary-value"><?php echo number_format($account['we_advance'], 0); ?></span>
+                                            <span class="summary-value"><?php echo number_format($we_advance, 0); ?></span>
                                         </div>
                                     </div>
                                 </div>

@@ -170,7 +170,7 @@ function getCreditDueDates($conn) {
         SELECT 
             t.id,
             t.type,
-            t.amount,
+            (t.amount - IFNULL(t.paid_amount,0)) as amount,
             t.date,
             t.due_date,
             CASE
@@ -206,6 +206,7 @@ function getCreditDueDates($conn) {
                 t.customer_id IS NOT NULL 
                 OR (t.mixed_account_id IS NOT NULL AND t.direction = 'their_debt')
             )
+            AND (t.amount - IFNULL(t.paid_amount,0)) > 0
         ORDER BY
             t.due_date ASC
     ");
@@ -219,7 +220,7 @@ function getCreditDueDates($conn) {
         SELECT 
             t.id,
             t.type,
-            t.amount,
+            (t.amount - IFNULL(t.paid_amount,0)) as amount,
             t.date,
             t.due_date,
             CASE
@@ -255,6 +256,7 @@ function getCreditDueDates($conn) {
                 t.supplier_id IS NOT NULL 
                 OR (t.mixed_account_id IS NOT NULL AND t.direction = 'our_debt')
             )
+            AND (t.amount - IFNULL(t.paid_amount,0)) > 0
         ORDER BY
             t.due_date ASC
     ");
@@ -268,7 +270,7 @@ function getCreditDueDates($conn) {
         SELECT 
             t.id,
             t.type,
-            t.amount,
+            (t.amount - IFNULL(t.paid_amount,0)) as amount,
             t.date,
             t.due_date,
             CASE
@@ -305,6 +307,7 @@ function getCreditDueDates($conn) {
                 t.customer_id IS NOT NULL 
                 OR (t.mixed_account_id IS NOT NULL AND t.direction = 'their_debt')
             )
+            AND (t.amount - IFNULL(t.paid_amount,0)) > 0
         ORDER BY
             t.due_date ASC
     ");
@@ -319,7 +322,7 @@ function getCreditDueDates($conn) {
         SELECT 
             t.id,
             t.type,
-            t.amount,
+            (t.amount - IFNULL(t.paid_amount,0)) as amount,
             t.date,
             t.due_date,
             CASE
@@ -356,6 +359,7 @@ function getCreditDueDates($conn) {
                 t.supplier_id IS NOT NULL 
                 OR (t.mixed_account_id IS NOT NULL AND t.direction = 'our_debt')
             )
+            AND (t.amount - IFNULL(t.paid_amount,0)) > 0
         ORDER BY
             t.due_date ASC
     ");

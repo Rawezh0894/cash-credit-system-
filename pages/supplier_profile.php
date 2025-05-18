@@ -55,18 +55,19 @@ try {
     $stmt->execute([$supplier_id]);
     $transactions = $stmt->fetchAll();
 
-    // Calculate statistics
-    $total_credit = 0;
+    // Calculate real-time statistics (FIFO)
+    $we_owe = 0;
+    $advance_payment = 0;
     $total_payment = 0;
-    $total_advance = 0;
-
     foreach ($transactions as $transaction) {
-        if ($transaction['type'] === 'credit') {
-            $total_credit += floatval($transaction['amount']);
+        $paid = isset($transaction['paid_amount']) ? floatval($transaction['paid_amount']) : 0;
+        $remaining = floatval($transaction['amount']) - $paid;
+        if ($transaction['type'] === 'credit' && $remaining > 0) {
+            $we_owe += $remaining;
+        } elseif ($transaction['type'] === 'advance' && $remaining > 0) {
+            $advance_payment += $remaining;
         } elseif ($transaction['type'] === 'payment') {
             $total_payment += floatval($transaction['amount']);
-        } elseif ($transaction['type'] === 'advance') {
-            $total_advance += floatval($transaction['amount']);
         }
     }
 
@@ -154,7 +155,7 @@ try {
                                         </div>
                                         <div class="summary-data">
                                             <span class="summary-label">ئێمە قەرزارین</span>
-                                            <span class="summary-value"><?php echo number_format($supplier['we_owe'], 0); ?></span>
+                                            <span class="summary-value"><?php echo number_format($we_owe, 0); ?></span>
                                         </div>
                                     </div>
                                 </div>
@@ -165,7 +166,7 @@ try {
                                         </div>
                                         <div class="summary-data">
                                             <span class="summary-label">پێشەکی ئێمە</span>
-                                            <span class="summary-value"><?php echo number_format($supplier['advance_payment'], 0); ?></span>
+                                            <span class="summary-value"><?php echo number_format($advance_payment, 0); ?></span>
                                         </div>
                                     </div>
                                 </div>

@@ -36,11 +36,69 @@ document.addEventListener('DOMContentLoaded', function() {
     // Add validation for owed_amount and advance_payment fields in both forms
     setupFieldValidation('customerAddForm');
     setupFieldValidation('customerEditForm');
+
+    // On DOMContentLoaded, load customer types for both forms
+    loadCustomerTypes('add');
+    loadCustomerTypes('edit');
+
+    // Handle add customer type modal
+    document.getElementById('saveCustomerTypeBtn').addEventListener('click', function() {
+        const input = document.getElementById('new_customer_type_name');
+        const typeName = input.value.trim();
+        if (!typeName) {
+            showSwalAlert2('error', 'هەڵە!', 'تکایە ناوی جۆر بنووسە');
+            return;
+        }
+        fetch('../process/customers/add_type.php', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+            body: 'type_name=' + encodeURIComponent(typeName)
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                // Close modal, clear input, reload types and select new one
+                input.value = '';
+                bootstrap.Modal.getInstance(document.getElementById('addCustomerTypeModal')).hide();
+                showSwalAlert2('success', 'سەرکەوتوو!', data.message);
+                // Reload types and select the new one in both forms
+                loadCustomerTypes('add', data.new_id);
+                loadCustomerTypes('edit', data.new_id);
+            } else {
+                showSwalAlert2('error', 'هەڵە!', data.message);
+            }
+        })
+        .catch(() => {
+            showSwalAlert2('error', 'هەڵە!', 'هەڵەیەک ڕوویدا لە زیادکردنی جۆر');
+        });
+    });
+
+    populateCustomerTypeFilter();
 });
+
+function populateCustomerTypeFilter() {
+    fetch('../process/customers/types.php')
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                const select = document.getElementById('filter_type');
+                if (!select) return;
+                select.innerHTML = '<option value="">هەموو جۆرەکان</option>';
+                data.data.forEach(type => {
+                    select.innerHTML += `<option value="${type.type_name}">${type.type_name}</option>`;
+                });
+            }
+        });
+}
 
 // Function to load customers
 function loadCustomers() {
-    fetch(`../process/customers/select.php?page=${currentPage}&per_page=${recordsPerPage}`)
+    let url = `../process/customers/select.php?page=${currentPage}&per_page=${recordsPerPage}`;
+    const typeFilter = document.getElementById('filter_type')?.value;
+    if (typeFilter) {
+        url += `&customer_type_name=${encodeURIComponent(typeFilter)}`;
+    }
+    fetch(url)
         .then(response => response.json())
         .then(data => {
             if (data.success) {
@@ -61,7 +119,7 @@ function renderCustomers(customers) {
     tbody.innerHTML = '';
     
     if (customers.length === 0) {
-        tbody.innerHTML = '<tr><td colspan="8" class="text-center border">هیچ کڕیارێک نەدۆزرایەوە</td></tr>';
+        tbody.innerHTML = '<tr><td colspan="9" class="text-center border">هیچ کڕیارێک نەدۆزرایەوە</td></tr>';
         return;
     }
     
@@ -82,7 +140,9 @@ function renderCustomers(customers) {
                 <td class="border text-break">${formatNumber(customer.owed_amount)}</td>
                 <td class="border text-break">${formatNumber(customer.advance_payment)}</td>
                 <td class="border text-break">${customer.city ? safeCell(customer.city) : '-'}</td>
-                <td class="border text-break">${customer.location === 'inside' ? 'ناو شار' : (customer.location === 'outside' ? 'دەرەوەی شار' : '-')}</td>
+                <td class="border text-break">${customer.location === 'inside' ? 'ناو شار' : (customer.location === 'outside' ? 'دەرەوەی شار' : '-')}
+                </td>
+                <td class="border text-break">${customer.customer_type_name ? safeCell(customer.customer_type_name) : '-'}</td>
                 <td class="border">
                     <a href="javascript:void(0);" class="action-btn person" title="زانیاری کڕیار" onclick="viewPerson(${customer.id})">
                         <i class="bi bi-person"></i>
@@ -117,7 +177,9 @@ function renderCustomers(customers) {
                 <td class="border text-break">${formatNumber(customer.owed_amount)}</td>
                 <td class="border text-break">${formatNumber(customer.advance_payment)}</td>
                 <td class="border text-break">${customer.city ? safeCell(customer.city) : '-'}</td>
-                <td class="border text-break">${customer.location === 'inside' ? 'ناو شار' : (customer.location === 'outside' ? 'دەرەوەی شار' : '-')}</td>
+                <td class="border text-break">${customer.location === 'inside' ? 'ناو شار' : (customer.location === 'outside' ? 'دەرەوەی شار' : '-')}
+                </td>
+                <td class="border text-break">${customer.customer_type_name ? safeCell(customer.customer_type_name) : '-'}</td>
                 <td class="border">
                     <a href="javascript:void(0);" class="action-btn person" title="زانیاری کڕیار" onclick="viewPerson(${customer.id})">
                         <i class="bi bi-person"></i>
@@ -309,6 +371,13 @@ function editCustomer(id) {
                     document.getElementById('edit_location_outside').checked = true;
                 }
                 
+                // Wait for select to be loaded, then set value
+                setTimeout(() => {
+                    if (document.getElementById('edit_customer_type_id')) {
+                        document.getElementById('edit_customer_type_id').value = customer.customer_type_id || '';
+                    }
+                }, 200);
+                
                 new bootstrap.Modal(document.getElementById('customerEditModal')).show();
             } else {
                 showSwalAlert2('error', 'هەڵە!', 'کڕیار نەدۆزرایەوە');
@@ -428,4 +497,46 @@ function setupFieldValidation(formId) {
             }
         });
     }
+}
+
+// Function to load customer types and render select
+function loadCustomerTypes(formType, selectId) {
+    fetch('../process/customers/types.php')
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                let selectHtml = `<select class="form-select" name="customer_type_id" id="${formType === 'add' ? 'customer_type_id' : 'edit_customer_type_id'}">`;
+                selectHtml += '<option value="">-- جۆری کڕیار هەلبژێرە --</option>';
+                data.data.forEach(type => {
+                    selectHtml += `<option value="${type.id}"${selectId && type.id == selectId ? ' selected' : ''}>${type.type_name}</option>`;
+                });
+                selectHtml += '</select>';
+                document.getElementById(formType === 'add' ? 'customer_type_select_add' : 'customer_type_select_edit').innerHTML = selectHtml;
+            } else {
+                document.getElementById(formType === 'add' ? 'customer_type_select_add' : 'customer_type_select_edit').innerHTML = '<div class="text-danger">هەڵە لە بارکردنی جۆرەکان</div>';
+            }
+        })
+        .catch(() => {
+            document.getElementById(formType === 'add' ? 'customer_type_select_add' : 'customer_type_select_edit').innerHTML = '<div class="text-danger">هەڵە لە بارکردنی جۆرەکان</div>';
+        });
+}
+
+// Add event listener for filter_type
+if (document.getElementById('filter_type')) {
+    document.getElementById('filter_type').addEventListener('change', function() {
+        currentPage = 1;
+        loadCustomers();
+    });
+}
+
+// Fallback for resetAllFilters if not defined (for customers page)
+if (typeof window.resetAllFilters !== 'function') {
+    window.resetAllFilters = function() {
+        // Reset all select2 filters
+        $('.select2-filter').val(null).trigger('change');
+        // Reset text filters in table headers
+        $('.table thead input[type="text"]').val('');
+        // Reload customers if function exists
+        if (typeof loadCustomers === 'function') loadCustomers();
+    };
 } 

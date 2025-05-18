@@ -280,7 +280,18 @@
     // Expose functions to global scope
     window.setupTableObserver = setupTableObserver;
     window.loadUniqueFilterValues = loadUniqueFilterValues;
-    window.resetAllFilters = resetAllFilters;
+    // Fallback for resetAllFilters if not defined
+    if (typeof window.resetAllFilters !== 'function') {
+        window.resetAllFilters = function() {
+            // Reset all select2 filters
+            $('.select2-filter').val(null).trigger('change');
+            // Reset text filters in table headers
+            $('.table thead input[type="text"]').val('');
+        };
+    }
+    if (typeof resetAllFilters === 'function') {
+        window.resetAllFilters = resetAllFilters;
+    }
     
     /**
      * Function to refresh the SELECT2 filters after adding a new item

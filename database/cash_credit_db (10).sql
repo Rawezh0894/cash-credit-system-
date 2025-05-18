@@ -24,11 +24,25 @@ SET time_zone = "+00:00";
 -- --------------------------------------------------------
 
 --
+-- Table structure for table `customer_types`
+--
+
+CREATE TABLE `customer_types` (
+  `id` int(11) NOT NULL AUTO_INCREMENT,
+  `type_name` varchar(100) NOT NULL,
+  `created_at` timestamp NOT NULL DEFAULT current_timestamp(),
+  PRIMARY KEY (`id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+-- --------------------------------------------------------
+
+--
 -- Table structure for table `customers`
 --
 
 CREATE TABLE `customers` (
   `id` int(11) NOT NULL,
+  `customer_type_id` int(11) DEFAULT NULL COMMENT 'Optional: type of customer',
   `name` varchar(100) NOT NULL,
   `phone1` varchar(20) NOT NULL,
   `phone2` varchar(20) DEFAULT NULL,
@@ -305,6 +319,7 @@ CREATE TABLE `transactions` (
   `id` int(11) NOT NULL,
   `type` enum('credit','cash','advance','payment','collection','advance_refund','advance_collection') NOT NULL,
   `amount` decimal(10,2) NOT NULL,
+  `paid_amount` decimal(10,2) DEFAULT 0,
   `date` date NOT NULL,
   `due_date` date DEFAULT NULL,
   `account_type` varchar(50) NOT NULL,
@@ -323,9 +338,9 @@ CREATE TABLE `transactions` (
 -- Dumping data for table `transactions`
 --
 
-INSERT INTO `transactions` (`id`, `type`, `amount`, `date`, `due_date`, `account_type`, `customer_id`, `supplier_id`, `mixed_account_id`, `direction`, `notes`, `created_by`, `created_at`, `is_deleted`, `deleted_at`) VALUES
-(1, 'payment', 30000.00, '2025-05-14', NULL, '', NULL, NULL, 1, NULL, '', 1, '2025-05-14 17:43:10', 0, NULL),
-(2, 'credit', 50000.00, '2025-05-14', '2025-05-20', '', NULL, NULL, 1, 'purchase', '', 1, '2025-05-14 17:50:41', 0, NULL);
+INSERT INTO `transactions` (`id`, `type`, `amount`, `paid_amount`, `date`, `due_date`, `account_type`, `customer_id`, `supplier_id`, `mixed_account_id`, `direction`, `notes`, `created_by`, `created_at`, `is_deleted`, `deleted_at`) VALUES
+(1, 'payment', 30000.00, 0.00, '2025-05-14', NULL, '', NULL, NULL, 1, NULL, '', 1, '2025-05-14 17:43:10', 0, NULL),
+(2, 'credit', 50000.00, 0.00, '2025-05-14', '2025-05-20', '', NULL, NULL, 1, 'purchase', '', 1, '2025-05-14 17:50:41', 0, NULL);
 
 -- --------------------------------------------------------
 
@@ -423,7 +438,8 @@ INSERT INTO `users` (`id`, `username`, `password`, `full_name`, `role_id`, `is_a
 --
 ALTER TABLE `customers`
   ADD PRIMARY KEY (`id`),
-  ADD KEY `created_by` (`created_by`);
+  ADD KEY `created_by` (`created_by`),
+  ADD KEY `customer_type_id` (`customer_type_id`);
 
 --
 -- Indexes for table `file_sequences`
@@ -574,7 +590,8 @@ ALTER TABLE `users`
 -- Constraints for table `customers`
 --
 ALTER TABLE `customers`
-  ADD CONSTRAINT `customers_ibfk_1` FOREIGN KEY (`created_by`) REFERENCES `users` (`id`);
+  ADD CONSTRAINT `customers_ibfk_1` FOREIGN KEY (`created_by`) REFERENCES `users` (`id`),
+  ADD CONSTRAINT `fk_customer_type` FOREIGN KEY (`customer_type_id`) REFERENCES `customer_types`(`id`);
 
 --
 -- Constraints for table `mixed_accounts`

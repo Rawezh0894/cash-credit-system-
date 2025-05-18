@@ -20,6 +20,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $db = Database::getInstance();
     try {
         $data = [
+            'customer_type_id' => isset($_POST['customer_type_id']) && is_numeric($_POST['customer_type_id']) ? (int)$_POST['customer_type_id'] : null,
             'name' => trim($_POST['name']),
             'phone1' => trim($_POST['phone1']),
             'phone2' => !empty($_POST['phone2']) ? trim($_POST['phone2']) : null,
@@ -43,10 +44,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             exit();
         }
         
-        $sql = "INSERT INTO customers (name, phone1, phone2, guarantor_name, guarantor_phone, owed_amount, advance_payment, city, location, notes, created_by) 
-                VALUES (:name, :phone1, :phone2, :guarantor_name, :guarantor_phone, :owed_amount, :advance_payment, :city, :location, :notes, :created_by)";
+        $sql = "INSERT INTO customers (customer_type_id, name, phone1, phone2, guarantor_name, guarantor_phone, owed_amount, advance_payment, city, location, notes, created_by) 
+                VALUES (:customer_type_id, :name, :phone1, :phone2, :guarantor_name, :guarantor_phone, :owed_amount, :advance_payment, :city, :location, :notes, :created_by)";
         
         $stmt = $db->prepare($sql);
+        $stmt->bindParam(':customer_type_id', $data['customer_type_id']);
         $stmt->bindParam(':name', $data['name']);
         $stmt->bindParam(':phone1', $data['phone1']);
         $stmt->bindParam(':phone2', $data['phone2']);

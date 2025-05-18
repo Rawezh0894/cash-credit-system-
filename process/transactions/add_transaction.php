@@ -67,7 +67,7 @@ if ($account_type === 'customer' && empty($customer_id)) {
     ];
     echo json_encode($response);
     exit();
-} elseif ($account_type === 'mixed' && (empty($mixed_account_id) || (in_array($type, ['cash','credit']) && empty($direction)))) {
+ } elseif ($account_type === 'mixed' && (empty($mixed_account_id) || (in_array($type, ['cash','credit']) && empty($direction)))) {
     $response = [
         'success' => false,
         'message' => 'تکایە هەژماری تێکەڵ و ئاڕاستەی مامەڵە هەڵبژێرە.'
@@ -205,6 +205,42 @@ try {
             // Decrease owed_amount
             $stmt = $conn->prepare("UPDATE customers SET owed_amount = owed_amount - :amount WHERE id = :customer_id");
             $stmt->bindParam(':amount', $amount);
+            $stmt->bindParam(':customer_id', $customer_id, PDO::PARAM_INT);
+            $stmt->execute();
+        }
+        if ($account_type === 'customer' && in_array($type, ['payment', 'collection'])) {
+            $remaining = $amount;
+            // Get all unpaid credits for this customer, FIFO order
+            $stmt = $conn->prepare("SELECT id, amount, IFNULL(paid_amount,0) as paid_amount FROM transactions WHERE customer_id = :customer_id AND type = 'credit' AND (amount - IFNULL(paid_amount,0)) > 0 ORDER BY due_date ASC, id ASC");
+            $stmt->bindParam(':customer_id', $customer_id, PDO::PARAM_INT);
+            $stmt->execute();
+            $credits = $stmt->fetchAll(PDO::FETCH_ASSOC);
+            foreach ($credits as $credit) {
+                $credit_remaining = $credit['amount'] - $credit['paid_amount'];
+                if ($credit_remaining <= 0) continue;
+                $pay = min($remaining, $credit_remaining);
+                // Update paid_amount for this credit
+                $stmt2 = $conn->prepare("UPDATE transactions SET paid_amount = paid_amount + :pay WHERE id = :id");
+                $stmt2->bindParam(':pay', $pay);
+                $stmt2->bindParam(':id', $credit['id']);
+                $stmt2->execute();
+                $remaining -= $pay;
+                if ($remaining <= 0) break;
+            }
+            // If any amount remains, apply to advance_payment
+            if ($remaining > 0) {
+                $stmt = $conn->prepare("UPDATE customers SET advance_payment = advance_payment + :amount WHERE id = :customer_id");
+                $stmt->bindParam(':amount', $remaining);
+                $stmt->bindParam(':customer_id', $customer_id, PDO::PARAM_INT);
+                $stmt->execute();
+            }
+            // Also update owed_amount accordingly
+            $stmt = $conn->prepare("SELECT SUM(amount - paid_amount) FROM transactions WHERE customer_id = :customer_id AND type = 'credit'");
+            $stmt->bindParam(':customer_id', $customer_id, PDO::PARAM_INT);
+            $stmt->execute();
+            $new_owed = $stmt->fetchColumn();
+            $stmt = $conn->prepare("UPDATE customers SET owed_amount = :owed WHERE id = :customer_id");
+            $stmt->bindParam(':owed', $new_owed);
             $stmt->bindParam(':customer_id', $customer_id, PDO::PARAM_INT);
             $stmt->execute();
         }

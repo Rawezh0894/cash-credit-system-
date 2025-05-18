@@ -20,6 +20,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $db = Database::getInstance();
     try {
         $data = [
+            'customer_type_id' => isset($_POST['customer_type_id']) && is_numeric($_POST['customer_type_id']) ? (int)$_POST['customer_type_id'] : null,
             'name' => trim($_POST['name']),
             'phone1' => trim($_POST['phone1']),
             'phone2' => !empty($_POST['phone2']) ? trim($_POST['phone2']) : null,
@@ -34,6 +35,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         ];
         
         $sql = "UPDATE customers SET 
+                customer_type_id = :customer_type_id,
                 name = :name, 
                 phone1 = :phone1, 
                 phone2 = :phone2, 
@@ -47,6 +49,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 WHERE id = :id";
         
         $stmt = $db->prepare($sql);
+        $stmt->bindParam(':customer_type_id', $data['customer_type_id']);
         $stmt->bindParam(':id', $data['id']);
         $stmt->bindParam(':name', $data['name']);
         $stmt->bindParam(':phone1', $data['phone1']);
