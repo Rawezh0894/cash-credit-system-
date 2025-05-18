@@ -1,0 +1,272 @@
+/* Custom SELECT2 Styling */
+
+/* Main container */
+.select2-container {
+    width: 100% !important;
+    margin-bottom: 5px;
+}
+
+/* Dropdown selection box */
+.select2-container--default .select2-selection--single {
+    height: 38px;
+    padding: 5px;
+    border-radius: 4px;
+    background-color: var(--bs-body-bg);
+    border: 1px solid var(--bs-border-color);
+    transition: border-color 0.15s ease-in-out, box-shadow 0.15s ease-in-out;
+}
+
+.select2-container--default .select2-selection--single:hover {
+    border-color: var(--bs-primary-border-subtle);
+    background-color: var(--bs-body-bg);
+}
+
+/* Dropdown arrow */
+.select2-container--default .select2-selection--single .select2-selection__arrow {
+    height: 38px;
+}
+
+.select2-container--default .select2-selection--single .select2-selection__arrow b {
+    border-color: var(--bs-primary) transparent transparent transparent;
+    border-width: 6px 6px 0 6px;
+    margin-left: -6px;
+    margin-top: -3px;
+}
+
+.select2-container--default.select2-container--open .select2-selection--single .select2-selection__arrow b {
+    border-color: transparent transparent var(--bs-primary) transparent;
+    border-width: 0 6px 6px 6px;
+}
+
+/* Selection text */
+.select2-container--default .select2-selection--single .select2-selection__rendered {
+    line-height: 26px;
+    color: var(--bs-body-color);
+    padding-left: 12px;
+    padding-right: 25px;
+}
+
+/* Placeholder text */
+.select2-container--default .select2-selection--single .select2-selection__placeholder {
+    color: var(--bs-secondary-color);
+}
+
+/* Dropdown panel */
+.select2-container--default .select2-dropdown {
+    border: 1px solid var(--bs-border-color);
+    background-color: var(--bs-body-bg);
+    box-shadow: 0 0.5rem 1rem rgba(0, 0, 0, 0.15);
+    border-radius: 4px;
+    overflow: hidden;
+}
+
+/* Search input in dropdown */
+.select2-container--default .select2-search--dropdown .select2-search__field {
+    border: 1px solid var(--bs-border-color);
+    background-color: var(--bs-body-bg);
+    color: var(--bs-body-color);
+    padding: 8px;
+    border-radius: 4px;
+}
+
+.select2-container--default .select2-search--dropdown .select2-search__field:focus {
+    outline: none;
+    border-color: var(--bs-primary);
+    box-shadow: 0 0 0 0.25rem rgba(var(--bs-primary-rgb), 0.25);
+}
+
+/* Options in dropdown */
+.select2-container--default .select2-results__option {
+    padding: 10px 12px;
+    color: var(--bs-body-color);
+    transition: all 0.2s ease;
+    border-bottom: 1px solid var(--bs-border-color-translucent);
+}
+
+.select2-container--default .select2-results__option:last-child {
+    border-bottom: none;
+}
+
+/* Hover effect on options */
+.select2-container--default .select2-results__option--highlighted[data-selected] {
+    background-color: var(--bs-primary-bg-subtle);
+    color: var(--bs-primary);
+}
+
+/* Selected option in dropdown */
+.select2-container--default .select2-results__option[data-selected=true] {
+    background-color: var(--bs-primary);
+    color: white;
+    font-weight: 500;
+}
+
+/* Active state of the selected box */
+.select2-container--default.select2-container--open .select2-selection--single {
+    border-color: var(--bs-primary);
+    box-shadow: 0 0 0 0.25rem rgba(var(--bs-primary-rgb), 0.25);
+    background-color: var(--bs-primary-bg-subtle);
+}
+
+/* When select2 has focus */
+.select2-container--default.select2-container--focus {
+    outline: none;
+}
+
+/* Custom wrapper for our filters */
+.select2-filters-wrapper {
+    background-color: var(--bs-tertiary-bg);
+    border-radius: 8px;
+    padding: 20px;
+    margin-bottom: 25px;
+    border: 1px solid var(--bs-border-color);
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.05);
+}
+
+.select2-filters-wrapper .form-label {
+    font-weight: 600;
+    margin-bottom: 10px;
+    color: var(--bs-heading-color);
+    font-size: 1.05rem;
+}
+
+.select2-filters-wrapper .row {
+    margin-bottom: -10px;
+}
+
+.select2-filters-wrapper .col-md-4 {
+    margin-bottom: 15px;
+}
+
+/* Clear button (x) */
+.select2-container--default .select2-selection--single .select2-selection__clear {
+    margin-right: 10px;
+    color: var(--bs-danger);
+    font-weight: bold;
+}
+
+/* Disabled option in dropdown */
+.select2-container--default .select2-results__option[aria-disabled=true] {
+    opacity: 0.6;
+    position: relative;
+    padding-right: 30px; /* Make space for the lock icon */
+}
+
+.select2-container--default .select2-results__option[aria-disabled=true]::after {
+    content: '\F46A'; /* Bootstrap Icons lock code */
+    font-family: 'Bootstrap Icons';
+    position: absolute;
+    right: 10px;
+    top: 50%;
+    transform: translateY(-50%);
+    color: var(--bs-secondary-color);
+}
+
+/* RTL support for disabled options */
+.select2-container--default[dir="rtl"] .select2-results__option[aria-disabled=true] {
+    padding-right: 12px;
+    padding-left: 30px;
+}
+
+.select2-container--default[dir="rtl"] .select2-results__option[aria-disabled=true]::after {
+    right: auto;
+    left: 10px;
+}
+
+/* Disabled state */
+.select2-container--default.select2-container--disabled .select2-selection--single {
+    background-color: var(--bs-secondary-bg);
+    opacity: 0.6;
+}
+
+/* RTL support */
+.select2-container--default[dir="rtl"] .select2-selection--single .select2-selection__rendered {
+    padding-right: 12px;
+    padding-left: 25px;
+}
+
+.select2-container--default[dir="rtl"] .select2-selection--single .select2-selection__clear {
+    margin-left: 10px;
+    margin-right: 0;
+}
+
+/* Fix for modals with select2 dropdowns */
+.modal-dialog .select2-container .select2-selection--single {
+    background-color: white;
+    color: #212529;
+    border-color: #ced4da;
+}
+
+.modal-dialog .select2-container .select2-selection--single .select2-selection__rendered {
+    color: #212529;
+}
+
+.modal-dialog .select2-container .select2-selection--single .select2-selection__placeholder {
+    color: #6c757d;
+}
+
+.modal-dialog .select2-dropdown {
+    background-color: white;
+    color: #212529;
+}
+
+.modal-dialog .select2-results__option {
+    color: #212529;
+    background-color: white;
+}
+
+.modal-dialog .select2-container--default .select2-results__option--highlighted[data-selected] {
+    background-color: #f8f9fa;
+    color: #16181b;
+}
+
+.modal-dialog .select2-container--default .select2-results__option[data-selected=true] {
+    background-color: #0d6efd;
+    color: white;
+}
+
+.modal-dialog .select2-search--dropdown .select2-search__field {
+    background-color: white;
+    color: #212529;
+}
+
+/* Dark theme support for modals */
+[data-bs-theme="dark"] .modal-dialog .select2-container .select2-selection--single {
+    background-color: #343a40;
+    color: #f8f9fa;
+    border-color: #495057;
+}
+
+[data-bs-theme="dark"] .modal-dialog .select2-container .select2-selection--single .select2-selection__rendered {
+    color: #f8f9fa;
+}
+
+[data-bs-theme="dark"] .modal-dialog .select2-container .select2-selection--single .select2-selection__placeholder {
+    color: #adb5bd;
+}
+
+[data-bs-theme="dark"] .modal-dialog .select2-dropdown {
+    background-color: #343a40;
+    border-color: #495057;
+}
+
+[data-bs-theme="dark"] .modal-dialog .select2-results__option {
+    color: #f8f9fa;
+    background-color: #343a40;
+    border-color: #495057;
+}
+
+[data-bs-theme="dark"] .modal-dialog .select2-container--default .select2-results__option--highlighted[data-selected] {
+    background-color: #495057;
+    color: #f8f9fa;
+}
+
+[data-bs-theme="dark"] .modal-dialog .select2-container--default .select2-results__option[data-selected=true] {
+    background-color: #0d6efd;
+    color: white;
+}
+
+[data-bs-theme="dark"] .modal-dialog .select2-search--dropdown .select2-search__field {
+    background-color: #343a40;
+    color: #f8f9fa;
+    border-color: #495057;
+} 

@@ -1,0 +1,65 @@
+/* Button styles for permission-based functions */
+
+/* Disabled buttons */
+.btn[data-requires-permission] {
+    position: relative;
+    cursor: not-allowed;
+    opacity: 0.7;
+}
+
+/* Show lock icon on hover */
+.btn[data-requires-permission]:hover:after {
+    content: "\F46A"; /* Bootstrap icon lock code */
+    font-family: "Bootstrap Icons";
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    font-size: 1.5rem;
+    color: var(--bs-danger);
+    text-shadow: 0 0 5px rgba(255, 255, 255, 0.7);
+    animation: fadeIn 0.3s;
+}
+
+/* Lock overlay appearance animation */
+@keyframes fadeIn {
+    from { opacity: 0; }
+    to { opacity: 1; }
+}
+
+/* Hide original button content when showing lock */
+.btn[data-requires-permission]:hover > * {
+    visibility: hidden;
+}
+
+/* Bootstrap button variants with Kurdish RTL adjustments */
+.btn {
+    border-radius: 4px;
+    padding: 0.375rem 1rem;
+    transition: all 0.2s ease;
+}
+
+.btn i {
+    margin-left: 0.25rem; /* RTL adjustment */
+}
+
+.btn:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+}
+
+.btn:active {
+    transform: translateY(0);
+    box-shadow: none;
+}
+
+/* Custom button sizes */
+.btn-xs {
+    padding: 0.1rem 0.4rem;
+    font-size: 0.7rem;
+}
+
+/* Rounded buttons */
+.btn-rounded {
+    border-radius: 50px;
+} 

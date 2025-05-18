@@ -1,0 +1,40 @@
+.table {
+    text-align: center;
+    background-color: #2d3748 !important;
+    color: #fff !important;
+}
+
+.table td,
+.table th {
+    white-space: normal;
+    word-wrap: break-word;
+    vertical-align: middle;
+    padding: 0.75rem;
+}
+
+.table th,
+.table td {
+    text-align: center;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+/* Action buttons styling */
+
+[data-bs-theme="light"] .table,
+[data-bs-theme="light"] .modern-table,
+[data-bs-theme="light"] .table th,
+[data-bs-theme="light"] .table td,
+[data-bs-theme="light"] .modern-table th,
+[data-bs-theme="light"] .modern-table td {
+    border-color: #b0b0b0 !important;
+    border-width: 1.5px !important;
+}
+
+[data-bs-theme="light"] input.form-control,
+[data-bs-theme="light"] select.form-select,
+[data-bs-theme="light"] textarea.form-control {
+    border-color: #b0b0b0 !important;
+    border-width: 1.5px !important;
+}

@@ -1,0 +1,161 @@
+/* Navbar Styles */
+.navbar {
+    padding-right: 1rem !important;
+    padding-left: 1rem !important;
+    background: rgba(255, 255, 255, 0.1);
+    border-radius: 15px;
+    backdrop-filter: blur(10px);
+    border-bottom: 1px solid rgba(0,0,0,0.05); /* Lighter and more subtle border */
+    padding: 1rem 0;
+    z-index: 1051; /* Make sure navbar is above other content */
+    margin-bottom: 1.5rem; /* Add space below navbar */
+}
+
+[data-bs-theme="dark"] .navbar {
+    background: rgba(18, 18, 18, 0.8);
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.navbar-brand {
+    font-weight: 700;
+    font-size: 1.5rem;
+    color: var(--primary);
+}
+
+.navbar-nav .nav-link {
+    color: var(--bs-body-color);
+    font-weight: 500;
+    padding: 0.5rem 1rem;
+    border-radius: 8px;
+    transition: all 0.3s ease;
+    margin: 0 0.3rem;
+}
+
+.navbar-nav .nav-link:hover {
+    background-color: var(--primary);
+    color: white;
+}
+
+.navbar-nav .nav-link.active {
+    background-color: var(--primary);
+    color: white;
+}
+
+.navbar-toggler {
+    border: none;
+    padding: 0.5rem;
+    border-radius: 8px;
+}
+
+.navbar-toggler:focus {
+    box-shadow: none;
+}
+
+.navbar-toggler-icon {
+    background-image: none;
+    position: relative;
+    width: 24px;
+    height: 2px;
+    background-color: var(--bs-body-color);
+    display: inline-block;
+    transition: all 0.3s ease;
+}
+
+.navbar-toggler-icon::before,
+.navbar-toggler-icon::after {
+    content: '';
+    position: absolute;
+    width: 24px;
+    height: 2px;
+    background-color: var(--bs-body-color);
+    transition: all 0.3s ease;
+}
+
+.navbar-toggler-icon::before {
+    transform: translateY(-8px);
+}
+
+.navbar-toggler-icon::after {
+    transform: translateY(8px);
+}
+
+.navbar-toggler[aria-expanded="true"] .navbar-toggler-icon {
+    background-color: transparent;
+}
+
+.navbar-toggler[aria-expanded="true"] .navbar-toggler-icon::before {
+    transform: rotate(45deg);
+}
+
+.navbar-toggler[aria-expanded="true"] .navbar-toggler-icon::after {
+    transform: rotate(-45deg);
+}
+
+/* User dropdown styles */
+.user-dropdown .dropdown-toggle {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.5rem 1rem;
+    border-radius: 8px;
+    transition: all 0.3s ease;
+}
+
+.user-dropdown .dropdown-toggle:hover {
+    background-color: var(--primary);
+    color: white;
+}
+
+.user-dropdown .dropdown-menu {
+    background: var(--bs-body-bg);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 12px;
+    padding: 0.5rem;
+    margin-top: 0.5rem;
+    z-index: 1060; /* Make sure dropdown is above navbar and content */
+}
+
+.user-dropdown .dropdown-item {
+    border-radius: 8px;
+    padding: 0.5rem 1rem;
+    transition: all 0.3s ease;
+}
+
+.user-dropdown .dropdown-item:hover {
+    background-color: var(--primary);
+    color: white;
+}
+
+/* Theme switcher in navbar */
+.navbar .theme-switcher {
+    position: relative;
+    margin-right: 1rem;
+}
+
+.navbar .theme-switcher .btn {
+    padding: 0.5rem;
+    border-radius: 8px;
+    transition: all 0.3s ease;
+}
+
+.navbar .theme-switcher .btn:hover {
+    background-color: var(--primary);
+    color: white;
+}
+
+.navbar-nav .nav-item {
+    margin: 0 0.2rem;
+}
+
+/* Add styles for disabled menu items */
+.nav-link.disabled,
+.dropdown-item.disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+    color: var(--bs-secondary);
+}
+
+.nav-link.disabled i.bi-lock,
+.dropdown-item.disabled i.bi-lock {
+    color: var(--bs-danger-text-emphasis);
+} 

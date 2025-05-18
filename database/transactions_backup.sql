@@ -1,0 +1,21 @@
+CREATE TABLE `transactions_backup` (
+  `backup_id` int(11) NOT NULL AUTO_INCREMENT,
+  `original_id` int(11) NOT NULL,
+  `type` varchar(50) NOT NULL,
+  `amount` decimal(10,2) NOT NULL,
+  `date` date NOT NULL,
+  `account_type` varchar(50) NOT NULL,
+  `customer_id` int(11) DEFAULT NULL,
+  `supplier_id` int(11) DEFAULT NULL,
+  `mixed_account_id` int(11) DEFAULT NULL,
+  `direction` varchar(50) DEFAULT NULL,
+  `notes` text DEFAULT NULL,
+  `receipt_files` text DEFAULT NULL,
+  `created_at` timestamp NOT NULL DEFAULT current_timestamp(),
+  `updated_at` timestamp NOT NULL DEFAULT current_timestamp() ON UPDATE current_timestamp(),
+  `deleted_at` timestamp NULL DEFAULT NULL,
+  PRIMARY KEY (`backup_id`),
+  KEY `customer_id` (`customer_id`),
+  KEY `supplier_id` (`supplier_id`),
+  KEY `mixed_account_id` (`mixed_account_id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci; 

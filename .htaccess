@@ -1,0 +1,44 @@
+# Enable URL rewriting
+RewriteEngine On
+
+# If the requested path is dashboard.php, redirect to the new location
+RewriteRule ^dashboard\.php$ pages/dashboard.php [R=301,L]
+
+# Fix for other top-level pages
+RewriteRule ^users\.php$ pages/users.php [R=301,L]
+RewriteRule ^reports\.php$ pages/reports.php [R=301,L]
+RewriteRule ^profile\.php$ pages/profile.php [R=301,L]
+
+# Prevent directory listing
+Options -Indexes
+
+# Deny access to hidden files
+<FilesMatch "^\.">
+    Order allow,deny
+    Deny from all
+</FilesMatch>
+
+# Protect sensitive files
+<FilesMatch "\.(json|log|yml|yaml|config|ini|env|htaccess|htpasswd)$">
+    Order allow,deny
+    Deny from all
+</FilesMatch>
+
+# Block direct browser access to sensitive directories, but allow internal application access
+# Only block if accessed directly from a browser, not from within the application
+RewriteCond %{THE_REQUEST} ^(GET|POST|HEAD)\ /database/.*\ HTTP/
+RewriteRule ^database/ - [F,L]
+
+RewriteCond %{THE_REQUEST} ^(GET|POST|HEAD)\ /includes/.*\ HTTP/
+RewriteRule ^includes/ - [F,L]
+
+RewriteCond %{THE_REQUEST} ^(GET|POST|HEAD)\ /config/.*\ HTTP/
+RewriteRule ^config/ - [F,L]
+
+RewriteCond %{THE_REQUEST} ^(GET|POST|HEAD)\ /process/.*\ HTTP/
+RewriteRule ^process/ - [F,L]
+
+RewriteCond %{THE_REQUEST} ^(GET|POST|HEAD)\ /core/.*\ HTTP/
+RewriteRule ^core/ - [F,L]
+
+
