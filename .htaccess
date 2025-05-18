@@ -1,5 +1,18 @@
 # Enable URL rewriting
 RewriteEngine On
+RewriteBase /cash-credit-system-/
+
+# Allow access to all directories
+<IfModule mod_headers.c>
+    Header set Access-Control-Allow-Origin "*"
+</IfModule>
+
+# PHP settings
+<IfModule mod_php.c>
+    php_value display_errors On
+    php_value display_startup_errors On
+    php_value error_reporting E_ALL
+</IfModule>
 
 # If the requested path is dashboard.php, redirect to the new location
 RewriteRule ^dashboard\.php$ pages/dashboard.php [R=301,L]
@@ -23,6 +36,42 @@ Options -Indexes
     Order allow,deny
     Deny from all
 </FilesMatch>
+
+# Allow access to specific directories
+<Files ~ "^.*\.(php|js|css|png|jpg|jpeg|gif|ico)$">
+    Order Allow,Deny
+    Allow from all
+</Files>
+
+# Allow access to includes directory
+<Files ~ "^includes/.*\.php$">
+    Order Allow,Deny
+    Allow from all
+</Files>
+
+# Allow access to process directory
+<Files ~ "^process/.*\.php$">
+    Order Allow,Deny
+    Allow from all
+</Files>
+
+# Allow access to config directory
+<Files ~ "^config/.*\.php$">
+    Order Allow,Deny
+    Allow from all
+</Files>
+
+# Allow access to core directory
+<Files ~ "^core/.*\.php$">
+    Order Allow,Deny
+    Allow from all
+</Files>
+
+# Allow access to database directory
+<Files ~ "^database/.*\.php$">
+    Order Allow,Deny
+    Allow from all
+</Files>
 
 # Block direct browser access to sensitive directories, but allow internal application access
 # Only block if accessed directly from a browser, not from within the application
