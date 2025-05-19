@@ -25,7 +25,7 @@ try {
         WHERE t.customer_id = ? 
         AND t.type = 'credit' 
         AND t.due_date IS NOT NULL 
-        AND t.due_date != '0000-00-00'
+        AND t.due_date > '1000-01-01'
         ORDER BY t.due_date ASC
         LIMIT ? OFFSET ?
     ");
@@ -39,7 +39,7 @@ try {
         WHERE customer_id = ? 
         AND type = 'credit' 
         AND due_date IS NOT NULL 
-        AND due_date != '0000-00-00'
+        AND due_date > '1000-01-01'
     ");
     $stmt->execute([$customer_id]);
     $total_records = $stmt->fetch()['total'];
