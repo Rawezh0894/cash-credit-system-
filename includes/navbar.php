@@ -205,7 +205,7 @@ if (strpos($_SERVER['PHP_SELF'], '/pages/') !== false) {
 document.addEventListener('DOMContentLoaded', function() {
     // Get the current host and protocol
     const baseUrl = window.location.protocol + '//' + window.location.host;
-    // Set the logout link to the absolute path
-    document.getElementById('logout-link').href = baseUrl + '/cash-credit-system/core/logout.php';
+    // Set the logout link to the absolute path with the correct folder name
+    document.getElementById('logout-link').href = baseUrl + '/cash-credit-system-/core/logout.php';
 });
 </script> 
