@@ -1,0 +1,30 @@
+# Backup files
+*.save
+*.bak
+*.backup
+
+# Git internal files
+FETCH_HEAD
+.git/
+
+# Uploaded files
+uploads/receipts/
+
+# Environment files
+.env
+.env.*
+!.env.example
+
+# IDE files
+.vscode/
+.idea/
+*.sublime-*
+
+# OS generated files
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db 
