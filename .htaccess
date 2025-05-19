@@ -9,13 +9,6 @@ RewriteBase /cash-credit-system-/
     Header set Access-Control-Allow-Headers "Content-Type"
 </IfModule>
 
-# PHP settings
-<IfModule mod_php.c>
-    php_value display_errors On
-    php_value display_startup_errors On
-    php_value error_reporting E_ALL
-</IfModule>
-
 # Redirects
 RewriteRule ^dashboard\.php$ pages/dashboard.php [R=301,L]
 RewriteRule ^users\.php$ pages/users.php [R=301,L]
