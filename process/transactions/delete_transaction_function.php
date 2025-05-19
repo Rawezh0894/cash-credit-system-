@@ -191,7 +191,7 @@ function deleteTransaction($transaction_id) {
         }
         
         // Soft delete the transaction
-        $stmt = $conn->prepare("UPDATE transactions SET is_deleted = 1, deleted_at = NOW() WHERE id = ?");
+        $stmt = $conn->prepare("UPDATE transactions SET is_deleted = 1, deleted_at = NOW(), updated_at = NOW() WHERE id = ?");
         $stmt->execute([$transaction_id]);
         
         // If transaction has receipts, move them to backup
