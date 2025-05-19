@@ -30,7 +30,7 @@ if (!hasPermission('add_transaction')) {
 $type = $_POST['type'] ?? '';
 $amount = $_POST['amount'] ?? 0;
 $date = $_POST['date'] ?? date('Y-m-d');
-$due_date = $_POST['due_date'] ?? null;
+$due_date = !empty($_POST['due_date']) ? $_POST['due_date'] : null;
 $account_type = $_POST['account_type'] ?? '';
 $customer_id = $_POST['customer_id'] ?? null;
 $supplier_id = $_POST['supplier_id'] ?? null;
@@ -87,7 +87,7 @@ try {
     $stmt->bindParam(':type', $type);
     $stmt->bindParam(':amount', $amount);
     $stmt->bindParam(':date', $date);
-    $stmt->bindParam(':due_date', $due_date, PDO::PARAM_STR);
+    $stmt->bindParam(':due_date', $due_date, PDO::PARAM_STR | PDO::PARAM_NULL);
     $stmt->bindParam(':customer_id', $customer_id, PDO::PARAM_INT);
     $stmt->bindParam(':supplier_id', $supplier_id, PDO::PARAM_INT);
     $stmt->bindParam(':mixed_account_id', $mixed_account_id, PDO::PARAM_INT);

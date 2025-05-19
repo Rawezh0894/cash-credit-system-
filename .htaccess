@@ -2,9 +2,11 @@
 RewriteEngine On
 RewriteBase /cash-credit-system-/
 
-# Allow access to all directories
+# Allow CORS
 <IfModule mod_headers.c>
     Header set Access-Control-Allow-Origin "*"
+    Header set Access-Control-Allow-Methods "GET, POST, OPTIONS"
+    Header set Access-Control-Allow-Headers "Content-Type"
 </IfModule>
 
 # PHP settings
@@ -14,16 +16,26 @@ RewriteBase /cash-credit-system-/
     php_value error_reporting E_ALL
 </IfModule>
 
-# If the requested path is dashboard.php, redirect to the new location
+# Redirects
 RewriteRule ^dashboard\.php$ pages/dashboard.php [R=301,L]
-
-# Fix for other top-level pages
 RewriteRule ^users\.php$ pages/users.php [R=301,L]
 RewriteRule ^reports\.php$ pages/reports.php [R=301,L]
 RewriteRule ^profile\.php$ pages/profile.php [R=301,L]
 
 # Prevent directory listing
 Options -Indexes
+
+# Allow access to PHP files
+<FilesMatch "\.php$">
+    Order Allow,Deny
+    Allow from all
+</FilesMatch>
+
+# Allow access to media files
+<FilesMatch "\.(js|css|png|jpg|jpeg|gif|ico)$">
+    Order Allow,Deny
+    Allow from all
+</FilesMatch>
 
 # Deny access to hidden files
 <FilesMatch "^\.">
@@ -37,57 +49,6 @@ Options -Indexes
     Deny from all
 </FilesMatch>
 
-# Allow access to specific directories
-<Files ~ "^.*\.(php|js|css|png|jpg|jpeg|gif|ico)$">
-    Order Allow,Deny
-    Allow from all
-</Files>
-
-# Allow access to includes directory
-<Files ~ "^includes/.*\.php$">
-    Order Allow,Deny
-    Allow from all
-</Files>
-
-# Allow access to process directory
-<Files ~ "^process/.*\.php$">
-    Order Allow,Deny
-    Allow from all
-</Files>
-
-# Allow access to config directory
-<Files ~ "^config/.*\.php$">
-    Order Allow,Deny
-    Allow from all
-</Files>
-
-# Allow access to core directory
-<Files ~ "^core/.*\.php$">
-    Order Allow,Deny
-    Allow from all
-</Files>
-
-# Allow access to database directory
-<Files ~ "^database/.*\.php$">
-    Order Allow,Deny
-    Allow from all
-</Files>
-
-# Block direct browser access to sensitive directories, but allow internal application access
-# Only block if accessed directly from a browser, not from within the application
-RewriteCond %{THE_REQUEST} ^(GET|POST|HEAD)\ /database/.*\ HTTP/
-RewriteRule ^database/ - [F,L]
-
-RewriteCond %{THE_REQUEST} ^(GET|POST|HEAD)\ /includes/.*\ HTTP/
-RewriteRule ^includes/ - [F,L]
-
-RewriteCond %{THE_REQUEST} ^(GET|POST|HEAD)\ /config/.*\ HTTP/
-RewriteRule ^config/ - [F,L]
-
-RewriteCond %{THE_REQUEST} ^(GET|POST|HEAD)\ /process/.*\ HTTP/
-RewriteRule ^process/ - [F,L]
-
-RewriteCond %{THE_REQUEST} ^(GET|POST|HEAD)\ /core/.*\ HTTP/
-RewriteRule ^core/ - [F,L]
-
-
+# Handle OPTIONS method for CORS
+RewriteCond %{REQUEST_METHOD} OPTIONS
+RewriteRule ^(.*)$ $1 [R=200,L]
