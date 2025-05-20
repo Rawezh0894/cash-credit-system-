@@ -323,16 +323,16 @@ unset($_SESSION['error_message']);
     <script src="../assets/js/select2/select2.js"></script>
     <!-- Permissions JS -->
     <script src="../assets/js/permissions/permissions.js"></script>
-    <!-- Script for navbar -->
-
     <!-- Custom scripts -->
     <script src="../assets/js/suppliers/table-controls.js"></script>
+    <script src="../assets/js/suppliers/suppliers.js"></script>
     <script src="../assets/js/suppliers/pagination.js"></script>
     <!-- SweetAlert2 JS -->
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
     <script src="../assets/js/swalAlert2/swalAlert2.js"></script>
-    <script src="../assets/js/suppliers/suppliers.js"></script>
     <script src="../assets/js/filtters/location-filter.js"></script>
+    <!-- Debug script -->
+    <script src="../assets/js/debug-pagination.js"></script>
     
     <!-- SELECT2 Initialization -->
     <script>

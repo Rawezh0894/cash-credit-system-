@@ -385,12 +385,14 @@ if (isset($_SESSION['error_message'])) {
     <!-- Script for navbar -->
   
     <script src="../assets/js/customers/table-controls.js"></script>
+    <script src="../assets/js/customers/customers.js"></script>
     <script src="../assets/js/customers/pagination.js"></script>
     <!-- SweetAlert2 JS -->
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
     <script src="../assets/js/swalAlert2/swalAlert2.js"></script>
-    <script src="../assets/js/customers/customers.js"></script>
     <script src="../assets/js/filtters/location-filter.js"></script>
+    <!-- Debug script -->
+    <script src="../assets/js/debug-pagination.js"></script>
     
     <!-- SELECT2 Initialization -->
     <script>
