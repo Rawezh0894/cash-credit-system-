@@ -36,6 +36,20 @@ document.addEventListener('DOMContentLoaded', function() {
     // Add validation for we_owe and advance_payment fields in both forms
     setupFieldValidation('supplierAddForm');
     setupFieldValidation('supplierEditForm');
+
+    // Attach event delegation for pagination links
+    const pagination = document.getElementById('pagination');
+    if (pagination) {
+        pagination.addEventListener('click', function(e) {
+            if (e.target.tagName === 'A' && e.target.hasAttribute('data-page')) {
+                e.preventDefault();
+                const page = parseInt(e.target.getAttribute('data-page'));
+                if (!isNaN(page)) {
+                    changePage(page);
+                }
+            }
+        });
+    }
 });
 
 // Function to set up validation for we_owe and advance_payment fields
@@ -180,7 +194,7 @@ function renderPagination(totalPages) {
     const prevDisabled = currentPage <= 1 ? 'disabled' : '';
     paginationHtml += `
     <li class="page-item ${prevDisabled}">
-        <a class="page-link rounded-circle mx-1" href="#" data-page="${currentPage - 1}" aria-label="Previous">
+        <a class="page-link rounded-circle mx-1" href="javascript:void(0)" data-page="${currentPage - 1}" aria-label="Previous">
             <span aria-hidden="true">&laquo;</span>
         </a>
     </li>
@@ -203,7 +217,7 @@ function renderPagination(totalPages) {
     if (startPage > 1) {
         paginationHtml += `
         <li class="page-item">
-            <a class="page-link rounded-circle mx-1" href="#" data-page="1">1</a>
+            <a class="page-link rounded-circle mx-1" href="javascript:void(0)" data-page="1">1</a>
         </li>
         `;
         
@@ -222,7 +236,7 @@ function renderPagination(totalPages) {
         const active = i === currentPage ? 'active' : '';
         paginationHtml += `
         <li class="page-item ${active}">
-            <a class="page-link rounded-circle mx-1" href="#" data-page="${i}">${i}</a>
+            <a class="page-link rounded-circle mx-1" href="javascript:void(0)" data-page="${i}">${i}</a>
         </li>
         `;
     }
@@ -240,7 +254,7 @@ function renderPagination(totalPages) {
         
         paginationHtml += `
         <li class="page-item">
-            <a class="page-link rounded-circle mx-1" href="#" data-page="${totalPages}">${totalPages}</a>
+            <a class="page-link rounded-circle mx-1" href="javascript:void(0)" data-page="${totalPages}">${totalPages}</a>
         </li>
         `;
     }
@@ -249,7 +263,7 @@ function renderPagination(totalPages) {
     const nextDisabled = currentPage >= totalPages ? 'disabled' : '';
     paginationHtml += `
     <li class="page-item ${nextDisabled}">
-        <a class="page-link rounded-circle mx-1" href="#" data-page="${currentPage + 1}" aria-label="Next">
+        <a class="page-link rounded-circle mx-1" href="javascript:void(0)" data-page="${currentPage + 1}" aria-label="Next">
             <span aria-hidden="true">&raquo;</span>
         </a>
     </li>
@@ -258,18 +272,6 @@ function renderPagination(totalPages) {
     paginationHtml += '</ul></nav>';
     
     pagination.innerHTML = paginationHtml;
-
-    // Add click event listeners to pagination links
-    const paginationLinks = pagination.querySelectorAll('.page-link');
-    paginationLinks.forEach(link => {
-        link.addEventListener('click', function(e) {
-            e.preventDefault();
-            const page = this.getAttribute('data-page');
-            if (page) {
-                changePage(parseInt(page));
-            }
-        });
-    });
 }
 
 // Function to change page
