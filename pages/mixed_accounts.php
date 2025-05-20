@@ -276,8 +276,8 @@ if (isset($_SESSION['error_message'])) {
                                     </select>
                                 </div>
                                 <div class="col-md-4 mb-2">
-                                    <label id="filter_location_label" class="form-label">فلتەر بە شوێن:</label>
-                                    <select id="filter_location" class="form-control" data-column="6" aria-labelledby="filter_location_label">
+                                    <label for="filter_location" class="form-label">فلتەر بە شوێن:</label>
+                                    <select id="filter_location" class="form-control" data-column="6">
                                         <option value="">هەموو شوێنەکان</option>
                                         <option value="ناو شار">ناو شار</option>
                                         <option value="دەرەوەی شار">دەرەوەی شار</option>
@@ -376,17 +376,17 @@ if (isset($_SESSION['error_message'])) {
     <script src="../assets/js/select2/select2.js"></script>
     <!-- Permissions JS -->
     <script src="../assets/js/permissions/permissions.js"></script>
+    <!-- Script for navbar -->
+   
     <!-- Custom scripts -->
     <script src="../assets/js/mixed_accounts/table-controls.js"></script>
-    <script src="../assets/js/mixed_accounts/mixed_accounts.js"></script>
     <script src="../assets/js/mixed_accounts/pagination.js"></script>
     <!-- SweetAlert2 JS -->
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
     <script src="../assets/js/swalAlert2/swalAlert2.js"></script>
     <script src="../assets/js/mixed_accounts/delete.js"></script>
+    <script src="../assets/js/mixed_accounts/mixed_accounts.js"></script>
     <script src="../assets/js/filtters/location-filter.js"></script>
-    <!-- Pagination Fix -->
-    <script src="../assets/js/pagination-fix.js"></script>
     
     <!-- SELECT2 Initialization -->
     <script>
