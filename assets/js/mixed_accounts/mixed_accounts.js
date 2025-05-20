@@ -44,20 +44,6 @@ document.addEventListener('DOMContentLoaded', function() {
     
     // Add event listeners for the "we" fields in Edit form
     setupCreditAdvanceToggle('edit_we_owe', 'edit_we_advance', 'mixedAccountEditForm');
-
-    // Attach event delegation for pagination links
-    const pagination = document.getElementById('pagination');
-    if (pagination) {
-        pagination.addEventListener('click', function(e) {
-            if (e.target.tagName === 'A' && e.target.hasAttribute('data-page')) {
-                e.preventDefault();
-                const page = parseInt(e.target.getAttribute('data-page'));
-                if (!isNaN(page)) {
-                    changePage(page);
-                }
-            }
-        });
-    }
 });
 
 // Function to setup the credit vs advance toggle behavior
@@ -282,23 +268,6 @@ function renderPagination(totalPages) {
     paginationHtml += '</ul></nav>';
     
     pagination.innerHTML = paginationHtml;
-    attachPaginationHandler(); // Attach handler after rendering
-}
-
-// Attach event delegation for pagination links
-function attachPaginationHandler() {
-    const pagination = document.getElementById('pagination');
-    if (pagination) {
-        pagination.onclick = function(e) {
-            if (e.target.tagName === 'A' && e.target.hasAttribute('data-page')) {
-                e.preventDefault();
-                const page = parseInt(e.target.getAttribute('data-page'));
-                if (!isNaN(page)) {
-                    changePage(page);
-                }
-            }
-        };
-    }
 }
 
 // Function to change page

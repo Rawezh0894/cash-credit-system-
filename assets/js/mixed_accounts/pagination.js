@@ -1,17 +1,26 @@
 // Pagination functionality for mixed accounts page
 document.addEventListener('DOMContentLoaded', function() {
+    // Add event listeners to pagination links
+    attachPaginationEventListeners();
+});
+
+function attachPaginationEventListeners() {
     const paginationLinks = document.querySelectorAll('.pagination .page-link');
     paginationLinks.forEach(link => {
         link.addEventListener('click', function(e) {
             e.preventDefault();
             const page = this.getAttribute('data-page');
             if (page) {
-                loadPage(page);
+                // Use the changePage function from mixed_accounts.js
+                changePage(parseInt(page));
             }
         });
     });
-});
+}
 
+// The original loadPage function is not being used since we're using changePage
+// from the mixed_accounts.js file. We'll keep it commented in case it's needed later.
+/*
 function loadPage(page) {
     const url = new URL(window.location.href);
     url.searchParams.set('page', page);
@@ -36,16 +45,7 @@ function loadPage(page) {
             document.querySelector('.pagination').parentElement.innerHTML = newPagination.innerHTML;
             
             // Reattach event listeners to new pagination links
-            const paginationLinks = document.querySelectorAll('.pagination .page-link');
-            paginationLinks.forEach(link => {
-                link.addEventListener('click', function(e) {
-                    e.preventDefault();
-                    const page = this.getAttribute('data-page');
-                    if (page) {
-                        loadPage(page);
-                    }
-                });
-            });
+            attachPaginationEventListeners();
             
             // Update URL without reload
             window.history.pushState({}, '', url.toString());
@@ -54,4 +54,22 @@ function loadPage(page) {
             console.error('Error loading page:', error);
             tableBody.innerHTML = originalContent;
         });
-} 
+}
+*/
+
+// Observer to reattach pagination event listeners when pagination content changes
+const paginationObserver = new MutationObserver(function(mutations) {
+    mutations.forEach(function(mutation) {
+        if (mutation.type === 'childList') {
+            attachPaginationEventListeners();
+        }
+    });
+});
+
+// Start observing the pagination container
+document.addEventListener('DOMContentLoaded', function() {
+    const paginationContainer = document.getElementById('pagination');
+    if (paginationContainer) {
+        paginationObserver.observe(paginationContainer, { childList: true, subtree: true });
+    }
+}); 
