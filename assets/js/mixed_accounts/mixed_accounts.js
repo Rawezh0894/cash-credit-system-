@@ -282,6 +282,23 @@ function renderPagination(totalPages) {
     paginationHtml += '</ul></nav>';
     
     pagination.innerHTML = paginationHtml;
+    attachPaginationHandler(); // Attach handler after rendering
+}
+
+// Attach event delegation for pagination links
+function attachPaginationHandler() {
+    const pagination = document.getElementById('pagination');
+    if (pagination) {
+        pagination.onclick = function(e) {
+            if (e.target.tagName === 'A' && e.target.hasAttribute('data-page')) {
+                e.preventDefault();
+                const page = parseInt(e.target.getAttribute('data-page'));
+                if (!isNaN(page)) {
+                    changePage(page);
+                }
+            }
+        };
+    }
 }
 
 // Function to change page

@@ -76,18 +76,7 @@ document.addEventListener('DOMContentLoaded', function() {
     populateCustomerTypeFilter();
 
     // Attach event delegation for pagination links
-    const pagination = document.getElementById('pagination');
-    if (pagination) {
-        pagination.addEventListener('click', function(e) {
-            if (e.target.tagName === 'A' && e.target.hasAttribute('data-page')) {
-                e.preventDefault();
-                const page = parseInt(e.target.getAttribute('data-page'));
-                if (!isNaN(page)) {
-                    changePage(page);
-                }
-            }
-        });
-    }
+    attachPaginationHandler();
 });
 
 function populateCustomerTypeFilter() {
