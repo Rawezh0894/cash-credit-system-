@@ -678,43 +678,49 @@ try {
     
     // After all customer transaction updates, recalculate owed_amount to ensure it is never null
     if ($account_type === 'customer') {
-        // Check if this was the only transaction for this customer
-        $stmt = $conn->prepare("SELECT COUNT(*) FROM transactions WHERE customer_id = :customer_id AND type = 'credit' AND id != :transaction_id");
-        $stmt->bindParam(':customer_id', $customer_id, PDO::PARAM_INT);
-        $stmt->bindParam(':transaction_id', $transaction_id, PDO::PARAM_INT);
-        $stmt->execute();
-        $other_transactions = $stmt->fetchColumn();
-
-        // Get the initial customer data to see if they had an initial debt
-        $stmt = $conn->prepare("SELECT created_at FROM customers WHERE id = :customer_id");
-        $stmt->bindParam(':customer_id', $customer_id, PDO::PARAM_INT);
-        $stmt->execute();
-        $customer_created_at = $stmt->fetchColumn();
-        
-        // Get the earliest transaction date for this customer
-        $stmt = $conn->prepare("SELECT MIN(created_at) FROM transactions WHERE customer_id = :customer_id AND type = 'credit'");
-        $stmt->bindParam(':customer_id', $customer_id, PDO::PARAM_INT);
-        $stmt->execute();
-        $first_transaction_date = $stmt->fetchColumn();
-        
-        // Calculate a 5-minute window to determine if the first transaction was likely during customer creation
-        $time_diff = strtotime($first_transaction_date) - strtotime($customer_created_at);
-        $is_initial_transaction = ($time_diff < 300); // 5 minutes
-        
-        if ($other_transactions == 0 && $is_initial_transaction) {
-            // This was the initial transaction, treat it as the initial debt
-            // Don't recalculate, leave the current amount as is
+        // If this is a 'collection' (debt collection) transaction, we've already updated owed_amount earlier
+        // and no additional recalculation is needed
+        if ($type === 'collection') {
+            // No need to recalculate, the direct update has been done
         } else {
-            // For normal cases, recalculate based on all credit transactions
-            $stmt = $conn->prepare("SELECT SUM(amount - IFNULL(paid_amount, 0)) FROM transactions WHERE customer_id = :customer_id AND type = 'credit' AND is_deleted = 0");
+            // Check if this was the only transaction for this customer
+            $stmt = $conn->prepare("SELECT COUNT(*) FROM transactions WHERE customer_id = :customer_id AND type = 'credit' AND id != :transaction_id");
+            $stmt->bindParam(':customer_id', $customer_id, PDO::PARAM_INT);
+            $stmt->bindParam(':transaction_id', $transaction_id, PDO::PARAM_INT);
+            $stmt->execute();
+            $other_transactions = $stmt->fetchColumn();
+
+            // Get the initial customer data to see if they had an initial debt
+            $stmt = $conn->prepare("SELECT created_at FROM customers WHERE id = :customer_id");
             $stmt->bindParam(':customer_id', $customer_id, PDO::PARAM_INT);
             $stmt->execute();
-            $new_owed = $stmt->fetchColumn();
-            if ($new_owed === null) $new_owed = 0;
-            $stmt = $conn->prepare("UPDATE customers SET owed_amount = :owed WHERE id = :customer_id");
-            $stmt->bindParam(':owed', $new_owed);
+            $customer_created_at = $stmt->fetchColumn();
+            
+            // Get the earliest transaction date for this customer
+            $stmt = $conn->prepare("SELECT MIN(created_at) FROM transactions WHERE customer_id = :customer_id AND type = 'credit'");
             $stmt->bindParam(':customer_id', $customer_id, PDO::PARAM_INT);
             $stmt->execute();
+            $first_transaction_date = $stmt->fetchColumn();
+            
+            // Calculate a 5-minute window to determine if the first transaction was likely during customer creation
+            $time_diff = strtotime($first_transaction_date) - strtotime($customer_created_at);
+            $is_initial_transaction = ($time_diff < 300); // 5 minutes
+            
+            if ($other_transactions == 0 && $is_initial_transaction && $type === 'credit') {
+                // This was the initial transaction, treat it as the initial debt
+                // Don't recalculate, leave the current amount as is
+            } else {
+                // For normal cases, recalculate based on all credit transactions
+                $stmt = $conn->prepare("SELECT SUM(amount - IFNULL(paid_amount, 0)) FROM transactions WHERE customer_id = :customer_id AND type = 'credit' AND is_deleted = 0");
+                $stmt->bindParam(':customer_id', $customer_id, PDO::PARAM_INT);
+                $stmt->execute();
+                $new_owed = $stmt->fetchColumn();
+                if ($new_owed === null) $new_owed = 0;
+                $stmt = $conn->prepare("UPDATE customers SET owed_amount = :owed WHERE id = :customer_id");
+                $stmt->bindParam(':owed', $new_owed);
+                $stmt->bindParam(':customer_id', $customer_id, PDO::PARAM_INT);
+                $stmt->execute();
+            }
         }
     }
     
