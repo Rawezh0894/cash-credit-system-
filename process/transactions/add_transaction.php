@@ -208,7 +208,8 @@ try {
             $stmt->bindParam(':customer_id', $customer_id, PDO::PARAM_INT);
             $stmt->execute();
         }
-        if ($account_type === 'customer' && in_array($type, ['payment', 'collection'])) {
+        if ($account_type === 'customer' && $type === 'payment') {
+            // Only apply credit payments for payment transactions (not collection)
             $remaining = $amount;
             // Get all unpaid credits for this customer, FIFO order
             $stmt = $conn->prepare("SELECT id, amount, IFNULL(paid_amount,0) as paid_amount FROM transactions WHERE customer_id = :customer_id AND type = 'credit' AND (amount - IFNULL(paid_amount,0)) > 0 ORDER BY due_date ASC, id ASC");
@@ -234,7 +235,9 @@ try {
                 $stmt->bindParam(':customer_id', $customer_id, PDO::PARAM_INT);
                 $stmt->execute();
             }
-            // Also update owed_amount accordingly
+        }
+        // Also update owed_amount accordingly for all customer transactions
+        if ($account_type === 'customer') {
             $stmt = $conn->prepare("SELECT SUM(amount - paid_amount) FROM transactions WHERE customer_id = :customer_id AND type = 'credit'");
             $stmt->bindParam(':customer_id', $customer_id, PDO::PARAM_INT);
             $stmt->execute();

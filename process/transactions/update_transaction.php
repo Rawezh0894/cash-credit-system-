@@ -348,26 +348,26 @@ try {
             }
         } elseif ($type === 'collection') {
             // قەرز وەرگرتنەوە - کەمکردنەوەی پێشەکی
-            $stmt = $conn->prepare("SELECT advance_payment FROM customers WHERE id = :customer_id");
+            $stmt = $conn->prepare("SELECT owed_amount FROM customers WHERE id = :customer_id");
             $stmt->bindParam(':customer_id', $customer_id, PDO::PARAM_INT);
             $stmt->execute();
             $customer = $stmt->fetch(PDO::FETCH_ASSOC);
             
-            if ($customer['advance_payment'] >= $amount) {
-                // Decrease advance_payment
-                $stmt = $conn->prepare("UPDATE customers SET advance_payment = advance_payment - :amount WHERE id = :customer_id");
-                $stmt->bindParam(':amount', $amount);
-                $stmt->bindParam(':customer_id', $customer_id, PDO::PARAM_INT);
-                $stmt->execute();
-            } else {
-                // Decrease all advance_payment and add remaining to owed_amount
-                $remaining = $amount - $customer['advance_payment'];
-                
-                $stmt = $conn->prepare("UPDATE customers SET advance_payment = 0, owed_amount = owed_amount + :remaining WHERE id = :customer_id");
-                $stmt->bindParam(':remaining', $remaining);
-                $stmt->bindParam(':customer_id', $customer_id, PDO::PARAM_INT);
-                $stmt->execute();
+            if ($customer['owed_amount'] < $amount) {
+                // ناتوانرێت بڕی قەرز وەرگرتنەوە زیاتر بێت لە قەرز
+                $conn->rollBack();
+                $response = [
+                    'success' => false,
+                    'message' => 'ناتوانرێت بڕی قەرز وەرگرتنەوە زیاتر بێت لە قەرزی کڕیار. قەرزی ئێستا: ' . number_format($customer['owed_amount'], 0) . ' د.ع'
+                ];
+                echo json_encode($response);
+                exit();
             }
+            // Decrease owed_amount
+            $stmt = $conn->prepare("UPDATE customers SET owed_amount = owed_amount - :amount WHERE id = :customer_id");
+            $stmt->bindParam(':amount', $amount);
+            $stmt->bindParam(':customer_id', $customer_id, PDO::PARAM_INT);
+            $stmt->execute();
         }
     } elseif ($account_type === 'supplier') {
         if ($type === 'credit') {
@@ -695,6 +695,35 @@ try {
         $stmt->bindParam(':owed', $new_owed);
         $stmt->bindParam(':customer_id', $customer_id, PDO::PARAM_INT);
         $stmt->execute();
+    }
+    
+    // Apply payment to individual credits for payment transactions only (not collection)
+    if ($account_type === 'customer' && $type === 'payment') {
+        $remaining = $amount;
+        // Get all unpaid credits for this customer, FIFO order
+        $stmt = $conn->prepare("SELECT id, amount, IFNULL(paid_amount,0) as paid_amount FROM transactions WHERE customer_id = :customer_id AND type = 'credit' AND (amount - IFNULL(paid_amount,0)) > 0 ORDER BY due_date ASC, id ASC");
+        $stmt->bindParam(':customer_id', $customer_id, PDO::PARAM_INT);
+        $stmt->execute();
+        $credits = $stmt->fetchAll(PDO::FETCH_ASSOC);
+        foreach ($credits as $credit) {
+            $credit_remaining = $credit['amount'] - $credit['paid_amount'];
+            if ($credit_remaining <= 0) continue;
+            $pay = min($remaining, $credit_remaining);
+            // Update paid_amount for this credit
+            $stmt2 = $conn->prepare("UPDATE transactions SET paid_amount = paid_amount + :pay WHERE id = :id");
+            $stmt2->bindParam(':pay', $pay);
+            $stmt2->bindParam(':id', $credit['id']);
+            $stmt2->execute();
+            $remaining -= $pay;
+            if ($remaining <= 0) break;
+        }
+        // If any amount remains, apply to advance_payment
+        if ($remaining > 0) {
+            $stmt = $conn->prepare("UPDATE customers SET advance_payment = advance_payment + :amount WHERE id = :customer_id");
+            $stmt->bindParam(':amount', $remaining);
+            $stmt->bindParam(':customer_id', $customer_id, PDO::PARAM_INT);
+            $stmt->execute();
+        }
     }
     
     $conn->commit();
