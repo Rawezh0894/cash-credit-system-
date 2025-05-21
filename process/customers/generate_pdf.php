@@ -102,30 +102,14 @@ echo "advance_amount: " . $calculated_balance['advance_amount'] . "\n";
 echo "advance_refund: " . $calculated_balance['advance_refund'] . "\n";
 echo "-->\n";
 
-// Calculate balance from transactions instead of using database value
-// This fixes the issue where the database value might be incorrect due to application bugs
-$owed_amount = floatval($calculated_balance['credit_amount']) - 
-              (floatval($calculated_balance['collection_amount']) + floatval($calculated_balance['payment_amount']));
-
-$advance_payment = floatval($calculated_balance['advance_amount']) - 
-                 floatval($calculated_balance['advance_refund']);
-
-// Check if there are no transactions but the customer has a recorded debt in the database
-// This handles cases where a customer was created with an initial debt but no transactions
-if ($owed_amount == 0 && $calculated_balance['credit_amount'] == 0 && 
-    $calculated_balance['collection_amount'] == 0 && $calculated_balance['payment_amount'] == 0) {
-    // Use the database value if no transactions exist
-    $owed_amount = floatval($current_balance['owed_amount']);
-    echo "<!-- Using database owed_amount value because no transactions exist: " . $owed_amount . " -->";
-}
+// Use the actual current values from the database
+$owed_amount = floatval($current_balance['owed_amount']);
+$advance_payment = floatval($current_balance['advance_payment']);
 
 if ($owed_amount < 0) $owed_amount = 0;
 if ($advance_payment < 0) $advance_payment = 0;
 
 $balance = $owed_amount - $advance_payment;
-if ($advance_payment > $owed_amount) {
-    $balance = $advance_payment * -1; // Negative balance means customer has advance payment
-}
 
 // More debug info
 echo "<!-- \n";
