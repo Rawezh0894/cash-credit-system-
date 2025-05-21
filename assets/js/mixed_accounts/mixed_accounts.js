@@ -1,50 +1,140 @@
 // Global variables
 let currentPage = 1;
-let recordsPerPage = 10;
 let totalPages = 1;
+let perPage = 10;
+let searchParams = {};
 
-// Load mixed accounts on page load
-document.addEventListener('DOMContentLoaded', function() {
+// Document ready function
+$(document).ready(function() {
+    // Set default per page from select
+    perPage = parseInt($("#per_page").val());
+    
+    // Initial load
     loadMixedAccounts();
     
-    // Handle per page change
-    const perPageSelect = document.getElementById('per_page');
-    if (perPageSelect) {
-        perPageSelect.addEventListener('change', function() {
-            recordsPerPage = this.value;
-            currentPage = 1;
+    // Per page change handler
+    $("#per_page").on("change", function() {
+        perPage = parseInt($(this).val());
+        currentPage = 1; // Reset to first page
+        loadMixedAccounts();
+    });
+});
+
+// Load mixed accounts for the current page
+function loadMixedAccounts() {
+    $.ajax({
+        url: "../process/mixed_accounts/get_mixed_accounts.php",
+        type: "GET",
+        data: {
+            page: currentPage,
+            per_page: perPage,
+            ...searchParams
+        },
+        dataType: "json",
+        success: function(response) {
+            if (response.success) {
+                // Update total pages
+                totalPages = response.total_pages;
+                
+                // Render mixed accounts
+                renderMixedAccounts(response.mixed_accounts);
+                
+                // Update pagination
+                updatePagination();
+            } else {
+                $("#mixedAccountsTableBody").html('<tr><td colspan="9" class="text-center text-danger">' + response.message + '</td></tr>');
+            }
+        },
+        error: function(xhr, status, error) {
+            console.error(error);
+            $("#mixedAccountsTableBody").html('<tr><td colspan="9" class="text-center text-danger">هەڵەیەک ڕوویدا لە بارکردنی داتاکان</td></tr>');
+        }
+    });
+}
+
+// Update pagination function
+function updatePagination() {
+    const pagination = $("#pagination");
+    pagination.empty();
+    
+    if (totalPages <= 1) {
+        return;
+    }
+    
+    // Previous button
+    const prevBtn = $('<button class="btn btn-sm btn-outline-primary me-1">&laquo;</button>');
+    if (currentPage === 1) {
+        prevBtn.addClass('disabled');
+    } else {
+        prevBtn.click(() => {
+            currentPage--;
             loadMixedAccounts();
         });
     }
+    pagination.append(prevBtn);
     
-    // Handle add button click
-    const saveAccountAddBtn = document.getElementById('saveAccountAddBtn');
-    if (saveAccountAddBtn) {
-        saveAccountAddBtn.addEventListener('click', function() {
-            saveMixedAccount('add');
-        });
-    }
-
-    // Handle edit button click
-    const saveAccountEditBtn = document.getElementById('saveAccountEditBtn');
-    if (saveAccountEditBtn) {
-        saveAccountEditBtn.addEventListener('click', function() {
-            saveMixedAccount('edit');
-        });
+    // Calculate range of pages to show
+    let startPage = Math.max(1, currentPage - 2);
+    let endPage = Math.min(totalPages, startPage + 4);
+    
+    // Adjust start page if we're near the end
+    if (endPage - startPage < 4) {
+        startPage = Math.max(1, endPage - 4);
     }
     
-    // Add event listeners for the "they" fields in Add form
-    setupCreditAdvanceToggle('they_owe', 'they_advance', 'mixedAccountAddForm');
+    // First page
+    if (startPage > 1) {
+        const firstPageBtn = $('<button class="btn btn-sm btn-outline-primary me-1">1</button>');
+        firstPageBtn.click(() => {
+            currentPage = 1;
+            loadMixedAccounts();
+        });
+        pagination.append(firstPageBtn);
+        
+        if (startPage > 2) {
+            pagination.append('<span class="btn btn-sm btn-outline-primary me-1 disabled">...</span>');
+        }
+    }
     
-    // Add event listeners for the "we" fields in Add form
-    setupCreditAdvanceToggle('we_owe', 'we_advance', 'mixedAccountAddForm');
+    // Page buttons
+    for (let i = startPage; i <= endPage; i++) {
+        const pageBtn = $(`<button class="btn btn-sm btn-outline-primary me-1">${i}</button>`);
+        if (i === currentPage) {
+            pageBtn.addClass('active');
+        }
+        pageBtn.click(() => {
+            currentPage = i;
+            loadMixedAccounts();
+        });
+        pagination.append(pageBtn);
+    }
     
-    // Add event listeners for the "they" fields in Edit form
-    setupCreditAdvanceToggle('edit_they_owe', 'edit_they_advance', 'mixedAccountEditForm');
+    // Last page
+    if (endPage < totalPages) {
+        if (endPage < totalPages - 1) {
+            pagination.append('<span class="btn btn-sm btn-outline-primary me-1 disabled">...</span>');
+        }
+        
+        const lastPageBtn = $(`<button class="btn btn-sm btn-outline-primary me-1">${totalPages}</button>`);
+        lastPageBtn.click(() => {
+            currentPage = totalPages;
+            loadMixedAccounts();
+        });
+        pagination.append(lastPageBtn);
+    }
     
-    // Add event listeners for the "we" fields in Edit form
-    setupCreditAdvanceToggle('edit_we_owe', 'edit_we_advance', 'mixedAccountEditForm');
-});
+    // Next button
+    const nextBtn = $('<button class="btn btn-sm btn-outline-primary">&raquo;</button>');
+    if (currentPage === totalPages) {
+        nextBtn.addClass('disabled');
+    } else {
+        nextBtn.click(() => {
+            currentPage++;
+            loadMixedAccounts();
+        });
+    }
+    pagination.append(nextBtn);
+}
 
 // Function to setup the credit vs advance toggle behavior
 function setupCreditAdvanceToggle(creditFieldId, advanceFieldId, formId) {
@@ -79,24 +169,6 @@ function setupCreditAdvanceToggle(creditFieldId, advanceFieldId, formId) {
             creditField.setAttribute('disabled', 'disabled');
         }
     }
-}
-
-// Function to load mixed accounts
-function loadMixedAccounts() {
-    fetch(`../process/mixed_accounts/select.php?page=${currentPage}&per_page=${recordsPerPage}`)
-        .then(response => response.json())
-        .then(data => {
-            if (data.success) {
-                renderMixedAccounts(data.data);
-                totalPages = data.pagination.total_pages;
-                renderPagination(totalPages);
-            } else {
-                showSwalAlert2('error', 'هەڵە!', data.message);
-            }
-        })
-        .catch(error => {
-            showSwalAlert2('error', 'هەڵە!', 'هەڵەیەک ڕوویدا لە کاتی بارکردنی حسابەکان');
-        });
 }
 
 // Function to render mixed accounts table
@@ -174,107 +246,6 @@ function renderMixedAccounts(accounts) {
             tbody.appendChild(tr);
         });
     });
-}
-
-// Function to render pagination
-function renderPagination(totalPages) {
-    const pagination = document.getElementById('pagination');
-    pagination.innerHTML = '';
-    
-    if (totalPages <= 1) return;
-    
-    let paginationHtml = '<nav aria-label="Page navigation" class="mt-4">';
-    paginationHtml += '<ul class="pagination justify-content-center">';
-    
-    // Previous button
-    const prevDisabled = currentPage <= 1 ? 'disabled' : '';
-    paginationHtml += `
-    <li class="page-item ${prevDisabled}">
-        <a class="page-link rounded-circle mx-1" href="javascript:void(0)" data-page="${currentPage - 1}" aria-label="Previous">
-            <span aria-hidden="true">&laquo;</span>
-        </a>
-    </li>
-    `;
-    
-    // Calculate start and end page
-    let startPage = Math.max(1, currentPage - 2);
-    let endPage = Math.min(totalPages, currentPage + 2);
-    
-    // Adjust to always show 5 pages when possible
-    if (endPage - startPage < 4) {
-        if (startPage === 1) {
-            endPage = Math.min(totalPages, 5);
-        } else if (endPage === totalPages) {
-            startPage = Math.max(1, totalPages - 4);
-        }
-    }
-    
-    // First page link
-    if (startPage > 1) {
-        paginationHtml += `
-        <li class="page-item">
-            <a class="page-link rounded-circle mx-1" href="javascript:void(0)" data-page="1">1</a>
-        </li>
-        `;
-        
-        // Ellipsis if needed
-        if (startPage > 2) {
-            paginationHtml += `
-            <li class="page-item disabled">
-                <span class="page-link rounded-circle mx-1">...</span>
-            </li>
-            `;
-        }
-    }
-    
-    // Page numbers
-    for (let i = startPage; i <= endPage; i++) {
-        const active = i === currentPage ? 'active' : '';
-        paginationHtml += `
-        <li class="page-item ${active}">
-            <a class="page-link rounded-circle mx-1" href="javascript:void(0)" data-page="${i}">${i}</a>
-        </li>
-        `;
-    }
-    
-    // Last page link
-    if (endPage < totalPages) {
-        // Ellipsis if needed
-        if (endPage < totalPages - 1) {
-            paginationHtml += `
-            <li class="page-item disabled">
-                <span class="page-link rounded-circle mx-1">...</span>
-            </li>
-            `;
-        }
-        
-        paginationHtml += `
-        <li class="page-item">
-            <a class="page-link rounded-circle mx-1" href="javascript:void(0)" data-page="${totalPages}">${totalPages}</a>
-        </li>
-        `;
-    }
-    
-    // Next button
-    const nextDisabled = currentPage >= totalPages ? 'disabled' : '';
-    paginationHtml += `
-    <li class="page-item ${nextDisabled}">
-        <a class="page-link rounded-circle mx-1" href="javascript:void(0)" data-page="${currentPage + 1}" aria-label="Next">
-            <span aria-hidden="true">&raquo;</span>
-        </a>
-    </li>
-    `;
-    
-    paginationHtml += '</ul></nav>';
-    
-    pagination.innerHTML = paginationHtml;
-}
-
-// Function to change page
-function changePage(page) {
-    if (page < 1 || page > totalPages) return;
-    currentPage = page;
-    loadMixedAccounts();
 }
 
 // Function to save mixed account
