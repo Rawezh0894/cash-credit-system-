@@ -64,7 +64,7 @@ if (isset($_SESSION['error_message'])) {
                 <span class="icon-circle icon-transactions">
                     <i class="bi bi-receipt"></i>
                 </span>
-                مامەڵەکان
+            <!-- مامەڵەکان -->
             </h2>
             
             <!-- Transaction Add Modal -->
