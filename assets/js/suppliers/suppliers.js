@@ -1,8 +1,7 @@
 // Global variables
 let currentPage = 1;
+let recordsPerPage = 10;
 let totalPages = 1;
-let perPage = 10;
-let searchParams = {};
 
 // Load suppliers on page load
 document.addEventListener('DOMContentLoaded', function() {
@@ -12,7 +11,7 @@ document.addEventListener('DOMContentLoaded', function() {
     const perPageSelect = document.getElementById('per_page');
     if (perPageSelect) {
         perPageSelect.addEventListener('change', function() {
-            perPage = parseInt(this.value);
+            recordsPerPage = this.value;
             currentPage = 1;
             loadSuppliers();
         });
@@ -73,36 +72,21 @@ function setupFieldValidation(formId) {
     }
 }
 
-// Load suppliers for the current page
+// Function to load suppliers
 function loadSuppliers() {
-    $.ajax({
-        url: "../process/suppliers/get_suppliers.php",
-        type: "GET",
-        data: {
-            page: currentPage,
-            per_page: perPage,
-            ...searchParams
-        },
-        dataType: "json",
-        success: function(response) {
-            if (response.success) {
-                // Update total pages
-                totalPages = response.total_pages;
-                
-                // Render suppliers
-                renderSuppliers(response.suppliers);
-                
-                // Update pagination
-                updatePagination();
+    fetch(`../process/suppliers/select.php?page=${currentPage}&per_page=${recordsPerPage}`)
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                renderSuppliers(data.data);
+                renderPagination(data.totalPages);
             } else {
-                $("#suppliersTableBody").html('<tr><td colspan="9" class="text-center text-danger">' + response.message + '</td></tr>');
+                showSwalAlert2('error', 'هەڵە!', data.message);
             }
-        },
-        error: function(xhr, status, error) {
-            console.error(error);
-            $("#suppliersTableBody").html('<tr><td colspan="9" class="text-center text-danger">هەڵەیەک ڕوویدا لە بارکردنی داتاکان</td></tr>');
-        }
-    });
+        })
+        .catch(error => {
+            showSwalAlert2('error', 'هەڵە!', 'هەڵەیەک ڕوویدا لە کاتی بارکردنی دابینکەرەکان');
+        });
 }
 
 // Function to render suppliers table
@@ -182,88 +166,105 @@ function renderSuppliers(suppliers) {
     });
 }
 
-// Update pagination function
-function updatePagination() {
-    const pagination = $("#pagination");
-    pagination.empty();
+// Function to render pagination
+function renderPagination(totalPages) {
+    const pagination = document.getElementById('pagination');
+    pagination.innerHTML = '';
     
-    if (totalPages <= 1) {
-        return;
-    }
+    if (totalPages <= 1) return;
+    
+    let paginationHtml = '<nav aria-label="Page navigation" class="mt-4">';
+    paginationHtml += '<ul class="pagination justify-content-center">';
     
     // Previous button
-    const prevBtn = $('<button class="btn btn-sm btn-outline-primary me-1">&laquo;</button>');
-    if (currentPage === 1) {
-        prevBtn.addClass('disabled');
-    } else {
-        prevBtn.click(() => {
-            currentPage--;
-            loadSuppliers();
-        });
-    }
-    pagination.append(prevBtn);
+    const prevDisabled = currentPage <= 1 ? 'disabled' : '';
+    paginationHtml += `
+    <li class="page-item ${prevDisabled}">
+        <a class="page-link rounded-circle mx-1" href="javascript:void(0)" data-page="${currentPage - 1}" aria-label="Previous">
+            <span aria-hidden="true">&laquo;</span>
+        </a>
+    </li>
+    `;
     
-    // Calculate range of pages to show
+    // Calculate start and end page
     let startPage = Math.max(1, currentPage - 2);
-    let endPage = Math.min(totalPages, startPage + 4);
+    let endPage = Math.min(totalPages, currentPage + 2);
     
-    // Adjust start page if we're near the end
+    // Adjust to always show 5 pages when possible
     if (endPage - startPage < 4) {
-        startPage = Math.max(1, endPage - 4);
+        if (startPage === 1) {
+            endPage = Math.min(totalPages, 5);
+        } else if (endPage === totalPages) {
+            startPage = Math.max(1, totalPages - 4);
+        }
     }
     
-    // First page
+    // First page link
     if (startPage > 1) {
-        const firstPageBtn = $('<button class="btn btn-sm btn-outline-primary me-1">1</button>');
-        firstPageBtn.click(() => {
-            currentPage = 1;
-            loadSuppliers();
-        });
-        pagination.append(firstPageBtn);
+        paginationHtml += `
+        <li class="page-item">
+            <a class="page-link rounded-circle mx-1" href="javascript:void(0)" data-page="1">1</a>
+        </li>
+        `;
         
+        // Ellipsis if needed
         if (startPage > 2) {
-            pagination.append('<span class="btn btn-sm btn-outline-primary me-1 disabled">...</span>');
+            paginationHtml += `
+            <li class="page-item disabled">
+                <span class="page-link rounded-circle mx-1">...</span>
+            </li>
+            `;
         }
     }
     
-    // Page buttons
+    // Page numbers
     for (let i = startPage; i <= endPage; i++) {
-        const pageBtn = $(`<button class="btn btn-sm btn-outline-primary me-1">${i}</button>`);
-        if (i === currentPage) {
-            pageBtn.addClass('active');
-        }
-        pageBtn.click(() => {
-            currentPage = i;
-            loadSuppliers();
-        });
-        pagination.append(pageBtn);
+        const active = i === currentPage ? 'active' : '';
+        paginationHtml += `
+        <li class="page-item ${active}">
+            <a class="page-link rounded-circle mx-1" href="javascript:void(0)" data-page="${i}">${i}</a>
+        </li>
+        `;
     }
     
-    // Last page
+    // Last page link
     if (endPage < totalPages) {
+        // Ellipsis if needed
         if (endPage < totalPages - 1) {
-            pagination.append('<span class="btn btn-sm btn-outline-primary me-1 disabled">...</span>');
+            paginationHtml += `
+            <li class="page-item disabled">
+                <span class="page-link rounded-circle mx-1">...</span>
+            </li>
+            `;
         }
         
-        const lastPageBtn = $(`<button class="btn btn-sm btn-outline-primary me-1">${totalPages}</button>`);
-        lastPageBtn.click(() => {
-            currentPage = totalPages;
-            loadSuppliers();
-        });
-        pagination.append(lastPageBtn);
+        paginationHtml += `
+        <li class="page-item">
+            <a class="page-link rounded-circle mx-1" href="javascript:void(0)" data-page="${totalPages}">${totalPages}</a>
+        </li>
+        `;
     }
     
     // Next button
-    const nextBtn = $('<button class="btn btn-sm btn-outline-primary">&raquo;</button>');
-    if (currentPage === totalPages) {
-        nextBtn.addClass('disabled');
-    } else {
-        nextBtn.click(() => {
-            currentPage++;
-            loadSuppliers();
-        });
-    }
-    pagination.append(nextBtn);
+    const nextDisabled = currentPage >= totalPages ? 'disabled' : '';
+    paginationHtml += `
+    <li class="page-item ${nextDisabled}">
+        <a class="page-link rounded-circle mx-1" href="javascript:void(0)" data-page="${currentPage + 1}" aria-label="Next">
+            <span aria-hidden="true">&raquo;</span>
+        </a>
+    </li>
+    `;
+    
+    paginationHtml += '</ul></nav>';
+    
+    pagination.innerHTML = paginationHtml;
+}
+
+// Function to change page
+function changePage(page) {
+    if (page < 1 || page > totalPages) return;
+    currentPage = page;
+    loadSuppliers();
 }
 
 // Function to save supplier
