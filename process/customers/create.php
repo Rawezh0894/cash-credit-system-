@@ -62,27 +62,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $stmt->bindParam(':created_by', $data['created_by']);
         
         $stmt->execute();
-        $customer_id = $db->lastInsertId();
-        
-        // If owed_amount > 0, insert an initial credit transaction for this customer
-        if ($data['owed_amount'] > 0) {
-            $transactionSql = "INSERT INTO transactions (type, amount, date, account_type, customer_id, notes, created_by) VALUES (:type, :amount, :date, :account_type, :customer_id, :notes, :created_by)";
-            $transactionStmt = $db->prepare($transactionSql);
-            $transactionType = 'credit';
-            $transactionAmount = $data['owed_amount'];
-            $transactionDate = date('Y-m-d');
-            $transactionAccountType = 'customer';
-            $transactionNotes = 'قەرزی سەرەتایی کاتێک زیادکرا';
-            $transactionCreatedBy = $data['created_by'];
-            $transactionStmt->bindParam(':type', $transactionType);
-            $transactionStmt->bindParam(':amount', $transactionAmount);
-            $transactionStmt->bindParam(':date', $transactionDate);
-            $transactionStmt->bindParam(':account_type', $transactionAccountType);
-            $transactionStmt->bindParam(':customer_id', $customer_id);
-            $transactionStmt->bindParam(':notes', $transactionNotes);
-            $transactionStmt->bindParam(':created_by', $transactionCreatedBy);
-            $transactionStmt->execute();
-        }
         echo json_encode(['success' => true, 'message' => "کڕیار بە سەرکەوتوویی زیاد کرا."]);
     } catch (PDOException $e) {
         echo json_encode(['success' => false, 'message' => "هەڵە: " . $e->getMessage()]);

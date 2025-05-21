@@ -139,6 +139,39 @@ try {
     $stmt->bindParam(':transaction_id', $transaction_id, PDO::PARAM_INT);
     $stmt->execute();
     
+    // If this was a customer transaction, recalculate the balance
+    if ($transaction['customer_id'] && $transaction['type'] === 'credit') {
+        // Check if this was the first transaction for this customer
+        $stmt = $conn->prepare("SELECT MIN(created_at) FROM transactions WHERE customer_id = :customer_id AND type = 'credit'");
+        $stmt->bindParam(':customer_id', $transaction['customer_id'], PDO::PARAM_INT);
+        $stmt->execute();
+        $first_transaction_date = $stmt->fetchColumn();
+        
+        // Get the customer creation date
+        $stmt = $conn->prepare("SELECT created_at FROM customers WHERE id = :customer_id");
+        $stmt->bindParam(':customer_id', $transaction['customer_id'], PDO::PARAM_INT);
+        $stmt->execute();
+        $customer_created_at = $stmt->fetchColumn();
+        
+        // Check if the deleted transaction was likely the initial transaction (created within 5 minutes of customer)
+        $time_diff = strtotime($first_transaction_date) - strtotime($customer_created_at);
+        $was_initial_transaction = ($time_diff < 300); // 5 minutes
+        
+        // If this wasn't the initial transaction or there are other transactions, recalculate the balance
+        if (!$was_initial_transaction) {
+            // For normal transactions, recalculate based on all remaining credit transactions
+            $stmt = $conn->prepare("SELECT SUM(amount - IFNULL(paid_amount, 0)) FROM transactions WHERE customer_id = :customer_id AND type = 'credit' AND is_deleted = 0");
+            $stmt->bindParam(':customer_id', $transaction['customer_id'], PDO::PARAM_INT);
+            $stmt->execute();
+            $new_owed = $stmt->fetchColumn();
+            if ($new_owed === null) $new_owed = 0;
+            $stmt = $conn->prepare("UPDATE customers SET owed_amount = :owed WHERE id = :customer_id");
+            $stmt->bindParam(':owed', $new_owed);
+            $stmt->bindParam(':customer_id', $transaction['customer_id'], PDO::PARAM_INT);
+            $stmt->execute();
+        }
+    }
+    
     $conn->commit();
     
     // Delete physical files

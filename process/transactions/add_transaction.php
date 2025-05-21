@@ -238,15 +238,30 @@ try {
         }
         // Also update owed_amount accordingly for all customer transactions
         if ($account_type === 'customer') {
-            $stmt = $conn->prepare("SELECT SUM(amount - paid_amount) FROM transactions WHERE customer_id = :customer_id AND type = 'credit'");
+            // Check if this is the customer's first transaction
+            $stmt = $conn->prepare("SELECT COUNT(*) FROM transactions WHERE customer_id = :customer_id AND type = 'credit'");
             $stmt->bindParam(':customer_id', $customer_id, PDO::PARAM_INT);
             $stmt->execute();
-            $new_owed = $stmt->fetchColumn();
-            if ($new_owed === null) $new_owed = 0;
-            $stmt = $conn->prepare("UPDATE customers SET owed_amount = :owed WHERE id = :customer_id");
-            $stmt->bindParam(':owed', $new_owed);
-            $stmt->bindParam(':customer_id', $customer_id, PDO::PARAM_INT);
-            $stmt->execute();
+            $transaction_count = $stmt->fetchColumn();
+
+            if ($transaction_count == 1 && $type == 'credit') {
+                // This is the first credit transaction, so we should add to the initial debt, not replace it
+                $stmt = $conn->prepare("UPDATE customers SET owed_amount = owed_amount + :amount WHERE id = :customer_id");
+                $stmt->bindParam(':amount', $amount);
+                $stmt->bindParam(':customer_id', $customer_id, PDO::PARAM_INT);
+                $stmt->execute();
+            } else {
+                // For subsequent transactions, recalculate based on all credit transactions
+                $stmt = $conn->prepare("SELECT SUM(amount - IFNULL(paid_amount, 0)) FROM transactions WHERE customer_id = :customer_id AND type = 'credit' AND is_deleted = 0");
+                $stmt->bindParam(':customer_id', $customer_id, PDO::PARAM_INT);
+                $stmt->execute();
+                $new_owed = $stmt->fetchColumn();
+                if ($new_owed === null) $new_owed = 0;
+                $stmt = $conn->prepare("UPDATE customers SET owed_amount = :owed WHERE id = :customer_id");
+                $stmt->bindParam(':owed', $new_owed);
+                $stmt->bindParam(':customer_id', $customer_id, PDO::PARAM_INT);
+                $stmt->execute();
+            }
         }
     } elseif ($account_type === 'supplier') {
         if ($type === 'credit') {
