@@ -1,51 +1,22 @@
 /**
  * Location filter functionality for customers, suppliers, and mixed accounts pages
+ * This file is kept for compatibility, but the actual filtering is now handled
+ * by the server-side select.php files.
  */
 document.addEventListener('DOMContentLoaded', function() {
-    // Initialize location filter change event
-    const locationFilter = document.getElementById('filter_location');
-    if (locationFilter) {
-        locationFilter.addEventListener('change', function() {
-            applyLocationFilter();
-        });
-    }
-    
-    // Set up a MutationObserver to detect when table content changes
-    setupTableContentObserver();
+    // The functionality has been moved to the individual JS files
+    // to enable server-side filtering rather than client-side filtering.
+    // This file is kept for reference and backward compatibility.
 });
 
 /**
- * Apply location filter to the table
+ * Legacy function - moved to server-side filtering
+ * This function will be called by existing code but does nothing now
  */
 function applyLocationFilter() {
-    const locationFilter = document.getElementById('filter_location');
-    if (!locationFilter) return;
-    
-    const locationValue = locationFilter.value;
-    const table = document.querySelector('.table');
-    if (!table) return;
-    
-    const rows = table.querySelectorAll('tbody tr');
-    
-    rows.forEach(row => {
-        // If no filter is selected, show all rows
-        if (!locationValue) {
-            row.style.display = '';
-            return;
-        }
-        
-        // Location is in column 6 (index 6)
-        const locationCell = row.cells[6];
-        if (locationCell) {
-            const cellValue = locationCell.textContent.trim();
-            // If the cell value matches the filter value, show the row
-            if (cellValue === locationValue) {
-                row.style.display = '';
-            } else {
-                row.style.display = 'none';
-            }
-        }
-    });
+    // The filtering is now handled at the server level
+    // This function is kept for compatibility with existing code
+    console.log("Info: Location filtering is now handled server-side");
 }
 
 /**
@@ -67,26 +38,8 @@ function resetLocationFilter() {
 }
 
 /**
- * Set up a MutationObserver to detect changes to the table content
- * and reapply the location filter when needed
+ * This function is no longer needed since we use server-side filtering
  */
 function setupTableContentObserver() {
-    const tableBody = document.querySelector('.table tbody');
-    if (!tableBody) return;
-    
-    // Create a MutationObserver to watch for changes in the table
-    const observer = new MutationObserver(function(mutations) {
-        // If the location filter has a value, reapply the filter
-        const locationFilter = document.getElementById('filter_location');
-        if (locationFilter && locationFilter.value) {
-            applyLocationFilter();
-        }
-    });
-    
-    // Start observing the table for content changes
-    observer.observe(tableBody, {
-        childList: true, // observe direct children changes
-        subtree: true,   // observe all descendants
-        characterData: true // observe text changes
-    });
+    // No longer needed - kept for compatibility
 } 
