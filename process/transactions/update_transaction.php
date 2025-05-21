@@ -347,27 +347,28 @@ try {
                 $stmt->execute();
             }
         } elseif ($type === 'collection') {
-            // قەرز وەرگرتنەوە - کەمکردنەوەی پێشەکی
-            $stmt = $conn->prepare("SELECT advance_payment FROM customers WHERE id = :customer_id");
+            // قەرز وەرگرتنەوە - کەمکردنەوەی قەرز
+            $stmt = $conn->prepare("SELECT COALESCE(owed_amount, 0) as owed_amount FROM customers WHERE id = :customer_id");
             $stmt->bindParam(':customer_id', $customer_id, PDO::PARAM_INT);
             $stmt->execute();
             $customer = $stmt->fetch(PDO::FETCH_ASSOC);
             
-            if ($customer['advance_payment'] >= $amount) {
-                // Decrease advance_payment
-                $stmt = $conn->prepare("UPDATE customers SET advance_payment = advance_payment - :amount WHERE id = :customer_id");
-                $stmt->bindParam(':amount', $amount);
-                $stmt->bindParam(':customer_id', $customer_id, PDO::PARAM_INT);
-                $stmt->execute();
-            } else {
-                // Decrease all advance_payment and add remaining to owed_amount
-                $remaining = $amount - $customer['advance_payment'];
-                
-                $stmt = $conn->prepare("UPDATE customers SET advance_payment = 0, owed_amount = owed_amount + :remaining WHERE id = :customer_id");
-                $stmt->bindParam(':remaining', $remaining);
-                $stmt->bindParam(':customer_id', $customer_id, PDO::PARAM_INT);
-                $stmt->execute();
+            if ($customer['owed_amount'] < $amount) {
+                // ناتوانرێت بڕی قەرز وەرگرتنەوە زیاتر بێت لە قەرز
+                $conn->rollBack();
+                $response = [
+                    'success' => false,
+                    'message' => 'ناتوانرێت بڕی قەرز وەرگرتنەوە زیاتر بێت لە قەرزی کڕیار. قەرزی ئێستا: ' . number_format($customer['owed_amount'], 0) . ' د.ع'
+                ];
+                echo json_encode($response);
+                exit();
             }
+            
+            // Decrease owed_amount
+            $stmt = $conn->prepare("UPDATE customers SET owed_amount = owed_amount - :amount WHERE id = :customer_id");
+            $stmt->bindParam(':amount', $amount);
+            $stmt->bindParam(':customer_id', $customer_id, PDO::PARAM_INT);
+            $stmt->execute();
         }
     } elseif ($account_type === 'supplier') {
         if ($type === 'credit') {
