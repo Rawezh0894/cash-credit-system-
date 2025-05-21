@@ -55,38 +55,38 @@ foreach ($transactions as $key => $transaction) {
 // Calculate balance directly from non-deleted transactions
 $stmt = $conn->prepare("
     SELECT 
-        SUM(CASE 
-            WHEN type = 'credit' THEN amount 
-            ELSE 0 
-        END) as credit_amount,
-        SUM(CASE 
-            WHEN type = 'collection' THEN amount
-            ELSE 0 
-        END) as collection_amount,
-        SUM(CASE 
-            WHEN type = 'payment' THEN amount
-            ELSE 0 
-        END) as payment_amount,
-        SUM(CASE 
-            WHEN type = 'advance' THEN amount
-            ELSE 0 
-        END) as advance_amount,
-        SUM(CASE
-            WHEN type = 'advance_refund' THEN amount
-            ELSE 0
-        END) as advance_refund
+        SUM(CASE WHEN type = 'credit' THEN amount ELSE 0 END) as credit_amount,
+        SUM(CASE WHEN type = 'collection' THEN amount ELSE 0 END) as collection_amount,
+        SUM(CASE WHEN type = 'payment' THEN amount ELSE 0 END) as payment_amount,
+        SUM(CASE WHEN type = 'advance' THEN amount ELSE 0 END) as advance_amount,
+        SUM(CASE WHEN type = 'advance_refund' THEN amount ELSE 0 END) as advance_refund
     FROM transactions 
     WHERE customer_id = ? AND (is_deleted = 0 OR is_deleted IS NULL)
 ");
 $stmt->execute([$customer_id]);
 $calculated_balance = $stmt->fetch(PDO::FETCH_ASSOC);
 
-
-// We need to get the actual current balances from database, as the balance is calculated
-// and adjusted during transaction processing (especially for credit vs advance interaction)
+// Get current owed_amount and advance_payment from database
 $stmt = $conn->prepare("SELECT owed_amount, advance_payment FROM customers WHERE id = ?");
 $stmt->execute([$customer_id]);
 $current_balance = $stmt->fetch(PDO::FETCH_ASSOC);
+
+$has_credit_transaction = floatval($calculated_balance['credit_amount']) > 0;
+
+if ($has_credit_transaction) {
+    // If there are credit transactions, calculate based on transactions only
+    $owed_amount = floatval($calculated_balance['credit_amount']) - (floatval($calculated_balance['collection_amount']) + floatval($calculated_balance['payment_amount']));
+    $advance_payment = floatval($calculated_balance['advance_amount']) - floatval($calculated_balance['advance_refund']);
+} else {
+    // If no credit transactions, use the initial owed_amount from the database
+    $owed_amount = floatval($current_balance['owed_amount']);
+    $advance_payment = floatval($current_balance['advance_payment']);
+}
+
+if ($owed_amount < 0) $owed_amount = 0;
+if ($advance_payment < 0) $advance_payment = 0;
+
+$balance = $owed_amount - $advance_payment;
 
 // Show debug information - hidden in HTML comment
 echo "<!-- \n";
@@ -101,15 +101,6 @@ echo "payment_amount: " . $calculated_balance['payment_amount'] . "\n";
 echo "advance_amount: " . $calculated_balance['advance_amount'] . "\n";
 echo "advance_refund: " . $calculated_balance['advance_refund'] . "\n";
 echo "-->\n";
-
-// Use the actual current values from the database
-$owed_amount = floatval($current_balance['owed_amount']);
-$advance_payment = floatval($current_balance['advance_payment']);
-
-if ($owed_amount < 0) $owed_amount = 0;
-if ($advance_payment < 0) $advance_payment = 0;
-
-$balance = $owed_amount - $advance_payment;
 
 // More debug info
 echo "<!-- \n";
