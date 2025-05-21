@@ -707,18 +707,23 @@ try {
             $customer_created_at = $stmt->fetchColumn();
             
             // Get the earliest transaction date for this customer
-            $stmt = $conn->prepare("SELECT MIN(created_at) FROM transactions WHERE customer_id = :customer_id AND type = 'credit'");
+            $stmt = $conn->prepare("SELECT MIN(created_at) FROM transactions WHERE customer_id = :customer_id AND type = 'credit' AND id != :transaction_id");
             $stmt->bindParam(':customer_id', $customer_id, PDO::PARAM_INT);
+            $stmt->bindParam(':transaction_id', $transaction_id, PDO::PARAM_INT);
             $stmt->execute();
             $first_transaction_date = $stmt->fetchColumn();
             
             // Calculate a 5-minute window to determine if the first transaction was likely during customer creation
             $time_diff = strtotime($first_transaction_date) - strtotime($customer_created_at);
-            $is_initial_transaction = ($time_diff < 300); // 5 minutes
+            $is_initial_transaction = ($time_diff < 300 && $time_diff > -300); // 5 minutes
             
-            if ($other_transactions == 0 && $is_initial_transaction && $type === 'credit') {
-                // This was the initial transaction, treat it as the initial debt
-                // Don't recalculate, leave the current amount as is
+            if ($other_transactions == 0 && $type === 'credit') {
+                // This is the only credit transaction after update, treat it as initial transaction
+                // Add directly to owed_amount
+                $stmt = $conn->prepare("UPDATE customers SET owed_amount = owed_amount + :amount WHERE id = :customer_id");
+                $stmt->bindParam(':amount', $amount);
+                $stmt->bindParam(':customer_id', $customer_id, PDO::PARAM_INT);
+                $stmt->execute();
             } else {
                 // For normal cases, recalculate based on all credit transactions
                 $stmt = $conn->prepare("SELECT SUM(amount - IFNULL(paid_amount, 0)) FROM transactions WHERE customer_id = :customer_id AND type = 'credit' AND is_deleted = 0");

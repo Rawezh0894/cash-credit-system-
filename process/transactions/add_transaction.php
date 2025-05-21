@@ -247,12 +247,14 @@ try {
             } 
             // Check if this is the customer's first credit transaction
             else if ($type === 'credit') {
-                $stmt = $conn->prepare("SELECT COUNT(*) FROM transactions WHERE customer_id = :customer_id AND type = 'credit'");
+                // Count existing transactions BEFORE this one
+                $stmt = $conn->prepare("SELECT COUNT(*) FROM transactions WHERE customer_id = :customer_id AND type = 'credit' AND id != :current_transaction_id");
                 $stmt->bindParam(':customer_id', $customer_id, PDO::PARAM_INT);
+                $stmt->bindParam(':current_transaction_id', $transaction_id, PDO::PARAM_INT);
                 $stmt->execute();
                 $transaction_count = $stmt->fetchColumn();
 
-                if ($transaction_count == 1) {
+                if ($transaction_count == 0) {
                     // This is the first credit transaction, so we should add to the initial debt, not replace it
                     $stmt = $conn->prepare("UPDATE customers SET owed_amount = owed_amount + :amount WHERE id = :customer_id");
                     $stmt->bindParam(':amount', $amount);
