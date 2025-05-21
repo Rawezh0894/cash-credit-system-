@@ -418,4 +418,36 @@ function formatNumber(val) {
 
 function viewPerson(id) {
     window.location.href = 'supplier_profile.php?id=' + id;
-} 
+}
+
+// --- AJAX-based filter population for select2 filters ---
+function populateAllSupplierFilters() {
+    fetch('../process/suppliers/get_filter_options.php')
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                // Populate names
+                const nameSelect = $('#filter_name');
+                nameSelect.empty();
+                nameSelect.append('<option value="">هەموو ناوەکان</option>');
+                data.names.forEach(name => {
+                    nameSelect.append(`<option value="${name}">${name}</option>`);
+                });
+                nameSelect.trigger('change');
+
+                // Populate cities
+                const citySelect = $('#filter_city');
+                citySelect.empty();
+                citySelect.append('<option value="">هەموو شارەکان</option>');
+                data.cities.forEach(city => {
+                    citySelect.append(`<option value="${city}">${city}</option>`);
+                });
+                citySelect.trigger('change');
+            }
+        });
+}
+
+// Call this on page load
+$(document).ready(function() {
+    populateAllSupplierFilters();
+}); 
