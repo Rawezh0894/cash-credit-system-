@@ -118,19 +118,11 @@ try {
                 $stmt->bindParam(':customer_id', $customer_id, PDO::PARAM_INT);
                 $stmt->execute();
                 
-                // Only add to owed_amount if there's remaining amount after deduction
-                if ($remaining_amount > 0) {
-                    $stmt = $conn->prepare("UPDATE customers SET owed_amount = owed_amount + :remaining_amount WHERE id = :customer_id");
-                    $stmt->bindParam(':remaining_amount', $remaining_amount);
-                    $stmt->bindParam(':customer_id', $customer_id, PDO::PARAM_INT);
-                    $stmt->execute();
-                }
+                // COMMENT: We'll handle updating owed_amount in the final calculation at the end of the function
+                // No need to update owed_amount here as it will be calculated again later
             } else {
-                // No advance payment, add full amount to owed_amount
-                $stmt = $conn->prepare("UPDATE customers SET owed_amount = owed_amount + :amount WHERE id = :customer_id");
-                $stmt->bindParam(':amount', $amount);
-                $stmt->bindParam(':customer_id', $customer_id, PDO::PARAM_INT);
-                $stmt->execute();
+                // COMMENT: We'll handle updating owed_amount in the final calculation at the end of the function
+                // No need to update owed_amount here as it will be calculated again later
             }
         } elseif ($type === 'cash') {
             // No change to balance for cash transaction
