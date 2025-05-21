@@ -31,50 +31,14 @@ try {
     $page = isset($_GET['page']) ? (int)$_GET['page'] : 1;
     $offset = ($page - 1) * $per_page;
     
-    // Build WHERE clause with filters
-    $where = [];
-    $params = [];
-
-    // Filter by name
-    if (!empty($_GET['name'])) {
-        $where[] = 'name LIKE :name';
-        $params[':name'] = '%' . $_GET['name'] . '%';
-    }
-
-    // Filter by city
-    if (!empty($_GET['city'])) {
-        $where[] = 'city = :city';
-        $params[':city'] = $_GET['city'];
-    }
-
-    // Filter by location
-    if (!empty($_GET['location'])) {
-        $location = $_GET['location'] === 'ناو شار' ? 'inside' : 'outside';
-        $where[] = 'location = :location';
-        $params[':location'] = $location;
-    }
-
-    $whereSql = $where ? ('WHERE ' . implode(' AND ', $where)) : '';
-    
-    // Get total records (with filters)
-    $count_sql = "SELECT COUNT(*) FROM mixed_accounts $whereSql";
-    $count_stmt = $db->prepare($count_sql);
-    foreach ($params as $key => $value) {
-        $count_stmt->bindValue($key, $value);
-    }
-    $count_stmt->execute();
-    $total_records = $count_stmt->fetchColumn();
+    // Get total records
+    $count_sql = "SELECT COUNT(*) FROM mixed_accounts";
+    $total_records = $db->query($count_sql)->fetchColumn();
     $total_pages = ceil($total_records / $per_page);
     
-    // Get mixed accounts (with filters)
-    $sql = "SELECT * FROM mixed_accounts $whereSql ORDER BY created_at DESC LIMIT :offset, :per_page";
+    // Get mixed accounts
+    $sql = "SELECT * FROM mixed_accounts ORDER BY created_at DESC LIMIT :offset, :per_page";
     $stmt = $db->prepare($sql);
-    
-    // Bind filter parameters
-    foreach ($params as $key => $value) {
-        $stmt->bindValue($key, $value);
-    }
-    
     $stmt->bindParam(':offset', $offset, PDO::PARAM_INT);
     $stmt->bindParam(':per_page', $per_page, PDO::PARAM_INT);
     $stmt->execute();

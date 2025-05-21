@@ -3,6 +3,16 @@ let currentPage = 1;
 let recordsPerPage = 10;
 let totalPages = 1;
 
+let customerFilters = {
+    name: '',
+    phone: '',
+    owed_amount: '',
+    advance_payment: '',
+    city: '',
+    location: '',
+    customer_type_name: ''
+};
+
 // Load customers on page load
 document.addEventListener('DOMContentLoaded', function() {
     loadCustomers();
@@ -74,6 +84,9 @@ document.addEventListener('DOMContentLoaded', function() {
     });
 
     populateCustomerTypeFilter();
+
+    // Attach filter listeners
+    setupCustomerFilters();
 });
 
 function populateCustomerTypeFilter() {
@@ -94,30 +107,12 @@ function populateCustomerTypeFilter() {
 // Function to load customers
 function loadCustomers() {
     let url = `../process/customers/select.php?page=${currentPage}&per_page=${recordsPerPage}`;
-    
-    // Get filter values
-    const nameFilter = $('#filter_name').val();
-    const cityFilter = $('#filter_city').val();
-    const locationFilter = $('#filter_location').val();
-    const typeFilter = $('#filter_type').val();
-    
-    // Add filters to URL if they have values
-    if (nameFilter) {
-        url += `&name=${encodeURIComponent(nameFilter)}`;
-    }
-    
-    if (cityFilter) {
-        url += `&city=${encodeURIComponent(cityFilter)}`;
-    }
-    
-    if (locationFilter) {
-        url += `&location=${encodeURIComponent(locationFilter)}`;
-    }
-    
-    if (typeFilter) {
-        url += `&customer_type_name=${encodeURIComponent(typeFilter)}`;
-    }
-    
+    // Add filters as query params
+    Object.keys(customerFilters).forEach(key => {
+        if (customerFilters[key]) {
+            url += `&${encodeURIComponent(key)}=${encodeURIComponent(customerFilters[key])}`;
+        }
+    });
     fetch(url)
         .then(response => response.json())
         .then(data => {
@@ -570,34 +565,75 @@ if (document.getElementById('filter_type')) {
     });
 }
 
-// Add event listeners for other select2 filters
-$(document).ready(function() {
-    // Handle select2 filters
-    $('#filter_name, #filter_city').on('change', function() {
-        currentPage = 1;
-        loadCustomers();
-    });
-    
-    // Location filter is already handled by the location-filter.js file,
-    // but we need to update it to reload data instead of just hiding rows
-    $('#filter_location').on('change', function() {
-        currentPage = 1;
-        loadCustomers();
-    });
-});
-
 // Fallback for resetAllFilters if not defined (for customers page)
 if (typeof window.resetAllFilters !== 'function') {
     window.resetAllFilters = function() {
         // Reset all select2 filters
         $('.select2-filter').val(null).trigger('change');
-        // Reset location filter
-        $('#filter_location').val('').trigger('change');
         // Reset text filters in table headers
         $('.table thead input[type="text"]').val('');
-        // Reset to page 1 and reload
-        currentPage = 1;
         // Reload customers if function exists
         if (typeof loadCustomers === 'function') loadCustomers();
     };
+}
+
+function setupCustomerFilters() {
+    // Name filter (dropdown/select2)
+    const filterName = document.getElementById('filter_name');
+    if (filterName) {
+        filterName.addEventListener('change', function() {
+            customerFilters.name = this.value;
+            currentPage = 1;
+            loadCustomers();
+        });
+    }
+    // City filter (dropdown/select2)
+    const filterCity = document.getElementById('filter_city');
+    if (filterCity) {
+        filterCity.addEventListener('change', function() {
+            customerFilters.city = this.value;
+            currentPage = 1;
+            loadCustomers();
+        });
+    }
+    // Location filter (dropdown/select2)
+    const filterLocation = document.getElementById('filter_location');
+    if (filterLocation) {
+        filterLocation.addEventListener('change', function() {
+            customerFilters.location = this.value;
+            currentPage = 1;
+            loadCustomers();
+        });
+    }
+    // Type filter (dropdown/select2)
+    const filterType = document.getElementById('filter_type');
+    if (filterType) {
+        filterType.addEventListener('change', function() {
+            customerFilters.customer_type_name = this.value;
+            currentPage = 1;
+            loadCustomers();
+        });
+    }
+    // Table header search fields
+    const table = document.querySelector('table');
+    if (table) {
+        const headerInputs = table.querySelectorAll('thead input[type="text"]');
+        headerInputs.forEach((input, idx) => {
+            input.addEventListener('input', function() {
+                // Map column index to filter key
+                switch (idx) {
+                    case 0: break; // #
+                    case 1: customerFilters.name = this.value; break;
+                    case 2: customerFilters.phone = this.value; break;
+                    case 3: customerFilters.owed_amount = this.value; break;
+                    case 4: customerFilters.advance_payment = this.value; break;
+                    case 5: customerFilters.city = this.value; break;
+                    case 6: customerFilters.location = this.value; break;
+                    case 7: customerFilters.customer_type_name = this.value; break;
+                }
+                currentPage = 1;
+                loadCustomers();
+            });
+        });
+    }
 } 

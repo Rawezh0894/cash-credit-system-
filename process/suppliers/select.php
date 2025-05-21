@@ -31,47 +31,14 @@ $recordsPerPage = isset($_GET['per_page']) ? (int)$_GET['per_page'] : 10;
 $currentPage = isset($_GET['page']) ? (int)$_GET['page'] : 1;
 $offset = ($currentPage - 1) * $recordsPerPage;
 
-// Build WHERE clause with filters
-$where = [];
-$params = [];
-
-// Filter by name
-if (!empty($_GET['name'])) {
-    $where[] = 'name LIKE ?';
-    $params[] = '%' . $_GET['name'] . '%';
-}
-
-// Filter by city
-if (!empty($_GET['city'])) {
-    $where[] = 'city = ?';
-    $params[] = $_GET['city'];
-}
-
-// Filter by location
-if (!empty($_GET['location'])) {
-    $location = $_GET['location'] === 'ناو شار' ? 'inside' : 'outside';
-    $where[] = 'location = ?';
-    $params[] = $location;
-}
-
-$whereSql = $where ? ('WHERE ' . implode(' AND ', $where)) : '';
-
-// Get total records count (with filters)
-$countSql = "SELECT COUNT(*) FROM suppliers $whereSql";
-$stmt = $db->prepare($countSql);
-$stmt->execute($params);
+// Get total records count
+$stmt = $db->prepare("SELECT COUNT(*) FROM suppliers");
+$stmt->execute();
 $totalRecords = $stmt->fetchColumn();
 $totalPages = ceil($totalRecords / $recordsPerPage);
 
-// Get paginated records (with filters)
-$sql = "SELECT * FROM suppliers $whereSql ORDER BY created_at DESC LIMIT :limit OFFSET :offset";
-$stmt = $db->prepare($sql);
-
-// Bind filter parameters
-foreach ($params as $idx => $val) {
-    $stmt->bindValue($idx + 1, $val);
-}
-
+// Get paginated records
+$stmt = $db->prepare("SELECT * FROM suppliers ORDER BY created_at DESC LIMIT :limit OFFSET :offset");
 $stmt->bindValue(':limit', $recordsPerPage, PDO::PARAM_INT);
 $stmt->bindValue(':offset', $offset, PDO::PARAM_INT);
 $stmt->execute();

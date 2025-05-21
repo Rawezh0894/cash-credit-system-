@@ -83,27 +83,7 @@ function setupCreditAdvanceToggle(creditFieldId, advanceFieldId, formId) {
 
 // Function to load mixed accounts
 function loadMixedAccounts() {
-    let url = `../process/mixed_accounts/select.php?page=${currentPage}&per_page=${recordsPerPage}`;
-    
-    // Get filter values
-    const nameFilter = $('#filter_name').val();
-    const cityFilter = $('#filter_city').val();
-    const locationFilter = $('#filter_location').val();
-    
-    // Add filters to URL if they have values
-    if (nameFilter) {
-        url += `&name=${encodeURIComponent(nameFilter)}`;
-    }
-    
-    if (cityFilter) {
-        url += `&city=${encodeURIComponent(cityFilter)}`;
-    }
-    
-    if (locationFilter) {
-        url += `&location=${encodeURIComponent(locationFilter)}`;
-    }
-    
-    fetch(url)
+    fetch(`../process/mixed_accounts/select.php?page=${currentPage}&per_page=${recordsPerPage}`)
         .then(response => response.json())
         .then(data => {
             if (data.success) {
@@ -458,34 +438,4 @@ function formatNumber(val) {
 
 function viewPerson(id) {
     window.location.href = 'mixed_account_profile.php?id=' + id;
-}
-
-// Document ready handlers for filters
-$(document).ready(function() {
-    // Handle select2 filters
-    $('#filter_name, #filter_city').on('change', function() {
-        currentPage = 1;
-        loadMixedAccounts();
-    });
-    
-    // Location filter is already handled by the location-filter.js file,
-    // but we need to update it to reload data instead of just hiding rows
-    $('#filter_location').on('change', function() {
-        currentPage = 1;
-        loadMixedAccounts();
-    });
-    
-    // Reset all filters function
-    window.resetAllFilters = function() {
-        // Reset all select2 filters
-        $('.select2-filter').val(null).trigger('change');
-        // Reset location filter
-        $('#filter_location').val('').trigger('change');
-        // Reset text filters in table headers
-        $('.table thead input[type="text"]').val('');
-        // Reset to page 1 and reload
-        currentPage = 1;
-        // Reload mixed accounts
-        loadMixedAccounts();
-    };
-}); 
+} 
