@@ -187,7 +187,7 @@ try {
             }
         } elseif ($type === 'collection') {
             // قەرز وەرگرتنەوە - کەمکردنەوەی قەرز
-            $stmt = $conn->prepare("SELECT owed_amount FROM customers WHERE id = :customer_id");
+            $stmt = $conn->prepare("SELECT COALESCE(owed_amount, 0) as owed_amount FROM customers WHERE id = :customer_id");
             $stmt->bindParam(':customer_id', $customer_id, PDO::PARAM_INT);
             $stmt->execute();
             $customer = $stmt->fetch(PDO::FETCH_ASSOC);
@@ -203,15 +203,9 @@ try {
                 exit();
             }
             
-            // Decrease owed_amount
-            $stmt = $conn->prepare("UPDATE customers SET owed_amount = owed_amount - :amount WHERE id = :customer_id");
-            $stmt->bindParam(':amount', $amount);
-            $stmt->bindParam(':customer_id', $customer_id, PDO::PARAM_INT);
-            $stmt->execute();
-            
-            // Update paid_amount for the corresponding credit transactions
+            // Update paid_amount for the corresponding credit transactions first
             $remaining = $amount;
-            $stmt = $conn->prepare("SELECT id, amount, IFNULL(paid_amount,0) as paid_amount FROM transactions WHERE customer_id = :customer_id AND type = 'credit' AND (amount - IFNULL(paid_amount,0)) > 0 ORDER BY due_date ASC, id ASC");
+            $stmt = $conn->prepare("SELECT id, amount, COALESCE(paid_amount, 0) as paid_amount FROM transactions WHERE customer_id = :customer_id AND type = 'credit' AND (amount - COALESCE(paid_amount, 0)) > 0 ORDER BY due_date ASC, id ASC");
             $stmt->bindParam(':customer_id', $customer_id, PDO::PARAM_INT);
             $stmt->execute();
             $credits = $stmt->fetchAll(PDO::FETCH_ASSOC);
@@ -222,7 +216,7 @@ try {
                 
                 $pay = min($remaining, $credit_remaining);
                 // Update paid_amount for this credit
-                $stmt2 = $conn->prepare("UPDATE transactions SET paid_amount = paid_amount + :pay WHERE id = :id");
+                $stmt2 = $conn->prepare("UPDATE transactions SET paid_amount = COALESCE(paid_amount, 0) + :pay WHERE id = :id");
                 $stmt2->bindParam(':pay', $pay);
                 $stmt2->bindParam(':id', $credit['id']);
                 $stmt2->execute();
@@ -230,6 +224,18 @@ try {
                 $remaining -= $pay;
                 if ($remaining <= 0) break;
             }
+            
+            // Calculate new owed_amount based on remaining unpaid credits
+            $stmt = $conn->prepare("SELECT COALESCE(SUM(amount - COALESCE(paid_amount, 0)), 0) as total_owed FROM transactions WHERE customer_id = :customer_id AND type = 'credit'");
+            $stmt->bindParam(':customer_id', $customer_id, PDO::PARAM_INT);
+            $stmt->execute();
+            $new_owed = $stmt->fetchColumn();
+            
+            // Update customer's owed_amount
+            $stmt = $conn->prepare("UPDATE customers SET owed_amount = :owed WHERE id = :customer_id");
+            $stmt->bindParam(':owed', $new_owed);
+            $stmt->bindParam(':customer_id', $customer_id, PDO::PARAM_INT);
+            $stmt->execute();
         }
         if ($account_type === 'customer' && in_array($type, ['payment', 'collection'])) {
             $remaining = $amount;
