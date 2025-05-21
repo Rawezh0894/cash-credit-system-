@@ -260,13 +260,32 @@ try {
                     $stmt->execute();
                 } else {
                     // For subsequent transactions, recalculate based on all credit transactions
-                    $stmt = $conn->prepare("SELECT SUM(amount - IFNULL(paid_amount, 0)) FROM transactions WHERE customer_id = :customer_id AND type = 'credit' AND is_deleted = 0");
+                    $stmt = $conn->prepare("SELECT SUM(amount - IFNULL(paid_amount, 0)) FROM transactions 
+                                           WHERE customer_id = :customer_id 
+                                           AND type = 'credit' 
+                                           AND is_deleted = 0");
                     $stmt->bindParam(':customer_id', $customer_id, PDO::PARAM_INT);
                     $stmt->execute();
                     $new_owed = $stmt->fetchColumn();
                     if ($new_owed === null) $new_owed = 0;
+                    
+                    // Subtract all collection transactions
+                    $stmt = $conn->prepare("SELECT SUM(amount) FROM transactions 
+                                           WHERE customer_id = :customer_id 
+                                           AND type = 'collection' 
+                                           AND is_deleted = 0");
+                    $stmt->bindParam(':customer_id', $customer_id, PDO::PARAM_INT);
+                    $stmt->execute();
+                    $total_collections = $stmt->fetchColumn();
+                    if ($total_collections === null) $total_collections = 0;
+                    
+                    // Calculate the final owed amount
+                    $final_owed = $new_owed - $total_collections;
+                    if ($final_owed < 0) $final_owed = 0;
+                    
+                    // Update the customer's owed_amount with the calculated value
                     $stmt = $conn->prepare("UPDATE customers SET owed_amount = :owed WHERE id = :customer_id");
-                    $stmt->bindParam(':owed', $new_owed);
+                    $stmt->bindParam(':owed', $final_owed);
                     $stmt->bindParam(':customer_id', $customer_id, PDO::PARAM_INT);
                     $stmt->execute();
                 }
