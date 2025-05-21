@@ -94,29 +94,21 @@ try {
     $total_advance = 0;
     $total_payment = 0;
 
-    // Get current balances from database
-    $stmt = $conn->prepare("SELECT owed_amount, advance_payment FROM customers WHERE id = ?");
-    $stmt->execute([$customer_id]);
-    $current_balance = $stmt->fetch(PDO::FETCH_ASSOC);
-
-    // Use the actual current values from the database
-    $total_credit = floatval($current_balance['owed_amount']);
-    $total_advance = floatval($current_balance['advance_payment']);
-
-    // Calculate other totals from transactions
     foreach ($transactions as $transaction) {
-        if ($transaction['type'] === 'cash') {
+        if ($transaction['type'] === 'credit') {
+            // Only count remaining credit
+            $remaining = isset($transaction['paid_amount']) ? ($transaction['amount'] - $transaction['paid_amount']) : $transaction['amount'];
+            if ($remaining > 0) {
+                $total_credit += $remaining;
+            }
+        } elseif ($transaction['type'] === 'cash') {
             $total_cash += floatval($transaction['amount']);
+        } elseif ($transaction['type'] === 'advance') {
+            $total_advance += floatval($transaction['amount']);
         } elseif ($transaction['type'] === 'payment') {
             $total_payment += floatval($transaction['amount']);
         }
     }
-
-    // Ensure values are never negative
-    $total_credit = max(0, $total_credit);
-    $total_advance = max(0, $total_advance);
-    $total_cash = max(0, $total_cash);
-    $total_payment = max(0, $total_payment);
 
     // Get transaction files/receipts
     $transaction_ids = array_column($transactions, 'id');

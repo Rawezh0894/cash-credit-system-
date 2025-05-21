@@ -26,12 +26,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             'phone2' => !empty($_POST['phone2']) ? trim($_POST['phone2']) : null,
             'guarantor_name' => !empty($_POST['guarantor_name']) ? trim($_POST['guarantor_name']) : null,
             'guarantor_phone' => !empty($_POST['guarantor_phone']) ? trim($_POST['guarantor_phone']) : null,
-            'address' => !empty($_POST['address']) ? $_POST['address'] : null,
-            'city' => !empty($_POST['city']) ? $_POST['city'] : null,
-            'location' => !empty($_POST['location']) ? $_POST['location'] : null,
-            'notes' => !empty($_POST['notes']) ? $_POST['notes'] : null,
-            'owed_amount' => !empty($_POST['owed_amount']) ? max(0, (float)$_POST['owed_amount']) : 0,
-            'advance_payment' => !empty($_POST['advance_payment']) ? max(0, (float)$_POST['advance_payment']) : 0,
+            'owed_amount' => !empty($_POST['owed_amount']) ? (float)$_POST['owed_amount'] : 0,
+            'advance_payment' => !empty($_POST['advance_payment']) ? (float)$_POST['advance_payment'] : 0,
+            'city' => !empty($_POST['city']) ? trim($_POST['city']) : '',
+            'location' => $_POST['location'],
+            'notes' => !empty($_POST['notes']) ? trim($_POST['notes']) : null,
             'created_by' => $_SESSION['user_id']
         ];
         
@@ -45,8 +44,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             exit();
         }
         
-        $sql = "INSERT INTO customers (customer_type_id, name, phone1, phone2, guarantor_name, guarantor_phone, address, city, location, notes, owed_amount, advance_payment, created_by) 
-                VALUES (:customer_type_id, :name, :phone1, :phone2, :guarantor_name, :guarantor_phone, :address, :city, :location, :notes, :owed_amount, :advance_payment, :created_by)";
+        $sql = "INSERT INTO customers (customer_type_id, name, phone1, phone2, guarantor_name, guarantor_phone, owed_amount, advance_payment, city, location, notes, created_by) 
+                VALUES (:customer_type_id, :name, :phone1, :phone2, :guarantor_name, :guarantor_phone, :owed_amount, :advance_payment, :city, :location, :notes, :created_by)";
         
         $stmt = $db->prepare($sql);
         $stmt->bindParam(':customer_type_id', $data['customer_type_id']);
@@ -55,15 +54,35 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $stmt->bindParam(':phone2', $data['phone2']);
         $stmt->bindParam(':guarantor_name', $data['guarantor_name']);
         $stmt->bindParam(':guarantor_phone', $data['guarantor_phone']);
-        $stmt->bindParam(':address', $data['address']);
+        $stmt->bindParam(':owed_amount', $data['owed_amount']);
+        $stmt->bindParam(':advance_payment', $data['advance_payment']);
         $stmt->bindParam(':city', $data['city']);
         $stmt->bindParam(':location', $data['location']);
         $stmt->bindParam(':notes', $data['notes']);
-        $stmt->bindParam(':owed_amount', $data['owed_amount']);
-        $stmt->bindParam(':advance_payment', $data['advance_payment']);
         $stmt->bindParam(':created_by', $data['created_by']);
         
         $stmt->execute();
+        $customer_id = $db->lastInsertId();
+        
+        // If owed_amount > 0, insert an initial credit transaction for this customer
+        if ($data['owed_amount'] > 0) {
+            $transactionSql = "INSERT INTO transactions (type, amount, date, account_type, customer_id, notes, created_by) VALUES (:type, :amount, :date, :account_type, :customer_id, :notes, :created_by)";
+            $transactionStmt = $db->prepare($transactionSql);
+            $transactionType = 'credit';
+            $transactionAmount = $data['owed_amount'];
+            $transactionDate = date('Y-m-d');
+            $transactionAccountType = 'customer';
+            $transactionNotes = 'قەرزی سەرەتایی کاتێک زیادکرا';
+            $transactionCreatedBy = $data['created_by'];
+            $transactionStmt->bindParam(':type', $transactionType);
+            $transactionStmt->bindParam(':amount', $transactionAmount);
+            $transactionStmt->bindParam(':date', $transactionDate);
+            $transactionStmt->bindParam(':account_type', $transactionAccountType);
+            $transactionStmt->bindParam(':customer_id', $customer_id);
+            $transactionStmt->bindParam(':notes', $transactionNotes);
+            $transactionStmt->bindParam(':created_by', $transactionCreatedBy);
+            $transactionStmt->execute();
+        }
         echo json_encode(['success' => true, 'message' => "کڕیار بە سەرکەوتوویی زیاد کرا."]);
     } catch (PDOException $e) {
         echo json_encode(['success' => false, 'message' => "هەڵە: " . $e->getMessage()]);
