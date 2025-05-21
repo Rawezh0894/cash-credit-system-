@@ -118,11 +118,21 @@ try {
                 $stmt->bindParam(':customer_id', $customer_id, PDO::PARAM_INT);
                 $stmt->execute();
                 
-                // COMMENT: We'll handle updating owed_amount in the final calculation at the end of the function
-                // No need to update owed_amount here as it will be calculated again later
+                // Only add to owed_amount if there's remaining amount after deduction
+                if ($remaining_amount > 0) {
+                    $stmt = $conn->prepare("UPDATE customers SET owed_amount = owed_amount + :remaining_amount WHERE id = :customer_id");
+                    $stmt->bindParam(':remaining_amount', $remaining_amount);
+                    $stmt->bindParam(':customer_id', $customer_id, PDO::PARAM_INT);
+                    $stmt->execute();
+                }
+                
+                // Since we've already handled the accounting for advance payment and remaining debt,
+                // we should skip the automatic recalculation at the end of this transaction
+                $skip_recalculation = true;
             } else {
-                // COMMENT: We'll handle updating owed_amount in the final calculation at the end of the function
-                // No need to update owed_amount here as it will be calculated again later
+                // No advance payment, add full amount to owed_amount - this will be handled in the 
+                // recalculation at the end of the transaction
+                $skip_recalculation = false;
             }
         } elseif ($type === 'cash') {
             // No change to balance for cash transaction
@@ -230,9 +240,9 @@ try {
         }
         // Also update owed_amount accordingly for all customer transactions
         if ($account_type === 'customer') {
-            // If this is a 'collection' (debt collection) transaction, we've already updated owed_amount earlier
-            // and no additional recalculation is needed
-            if ($type === 'collection') {
+            // If this is a collection transaction or we've already handled advance payment, 
+            // skip the automatic recalculation
+            if ($type === 'collection' || (isset($skip_recalculation) && $skip_recalculation === true)) {
                 // No need to recalculate, the direct update has been done
             } 
             // Check if this is the customer's first credit transaction
