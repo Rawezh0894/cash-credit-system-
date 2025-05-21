@@ -199,93 +199,99 @@ function renderPagination(totalPages) {
     const pagination = document.getElementById('pagination');
     pagination.innerHTML = '';
     
-    if (totalPages <= 1) return;
-    
-    let paginationHtml = '<nav aria-label="Page navigation" class="mt-4">';
-    paginationHtml += '<ul class="pagination justify-content-center">';
+    if (totalPages <= 1) {
+        return;
+    }
     
     // Previous button
-    const prevDisabled = currentPage <= 1 ? 'disabled' : '';
-    paginationHtml += `
-    <li class="page-item ${prevDisabled}">
-        <a class="page-link rounded-circle mx-1" href="javascript:void(0)" data-page="${currentPage - 1}" aria-label="Previous">
-            <span aria-hidden="true">&laquo;</span>
-        </a>
-    </li>
-    `;
+    const prevBtn = document.createElement('button');
+    prevBtn.className = 'btn btn-sm btn-outline-primary me-1';
+    prevBtn.innerHTML = '&laquo;';
+    if (currentPage === 1) {
+        prevBtn.classList.add('disabled');
+    } else {
+        prevBtn.addEventListener('click', function() {
+            currentPage--;
+            loadCustomers();
+        });
+    }
+    pagination.appendChild(prevBtn);
     
-    // Calculate start and end page
+    // Calculate range of pages to show
     let startPage = Math.max(1, currentPage - 2);
-    let endPage = Math.min(totalPages, currentPage + 2);
+    let endPage = Math.min(totalPages, startPage + 4);
     
-    // Adjust to always show 5 pages when possible
+    // Adjust start page if we're near the end
     if (endPage - startPage < 4) {
-        if (startPage === 1) {
-            endPage = Math.min(totalPages, 5);
-        } else if (endPage === totalPages) {
-            startPage = Math.max(1, totalPages - 4);
-        }
+        startPage = Math.max(1, endPage - 4);
     }
     
-    // First page link
+    // First page
     if (startPage > 1) {
-        paginationHtml += `
-        <li class="page-item">
-            <a class="page-link rounded-circle mx-1" href="javascript:void(0)" data-page="1">1</a>
-        </li>
-        `;
+        const firstPageBtn = document.createElement('button');
+        firstPageBtn.className = 'btn btn-sm btn-outline-primary me-1';
+        firstPageBtn.textContent = '1';
+        firstPageBtn.addEventListener('click', function() {
+            currentPage = 1;
+            loadCustomers();
+        });
+        pagination.appendChild(firstPageBtn);
         
-        // Ellipsis if needed
         if (startPage > 2) {
-            paginationHtml += `
-            <li class="page-item disabled">
-                <span class="page-link rounded-circle mx-1">...</span>
-            </li>
-            `;
+            const ellipsis = document.createElement('span');
+            ellipsis.className = 'btn btn-sm btn-outline-primary me-1 disabled';
+            ellipsis.textContent = '...';
+            pagination.appendChild(ellipsis);
         }
     }
     
-    // Page numbers
+    // Page buttons
     for (let i = startPage; i <= endPage; i++) {
-        const active = i === currentPage ? 'active' : '';
-        paginationHtml += `
-        <li class="page-item ${active}">
-            <a class="page-link rounded-circle mx-1" href="javascript:void(0)" data-page="${i}">${i}</a>
-        </li>
-        `;
+        const pageBtn = document.createElement('button');
+        pageBtn.className = 'btn btn-sm btn-outline-primary me-1';
+        if (i === currentPage) {
+            pageBtn.classList.add('active');
+        }
+        pageBtn.textContent = i;
+        pageBtn.addEventListener('click', function() {
+            currentPage = i;
+            loadCustomers();
+        });
+        pagination.appendChild(pageBtn);
     }
     
-    // Last page link
+    // Last page
     if (endPage < totalPages) {
-        // Ellipsis if needed
         if (endPage < totalPages - 1) {
-            paginationHtml += `
-            <li class="page-item disabled">
-                <span class="page-link rounded-circle mx-1">...</span>
-            </li>
-            `;
+            const ellipsis = document.createElement('span');
+            ellipsis.className = 'btn btn-sm btn-outline-primary me-1 disabled';
+            ellipsis.textContent = '...';
+            pagination.appendChild(ellipsis);
         }
         
-        paginationHtml += `
-        <li class="page-item">
-            <a class="page-link rounded-circle mx-1" href="javascript:void(0)" data-page="${totalPages}">${totalPages}</a>
-        </li>
-        `;
+        const lastPageBtn = document.createElement('button');
+        lastPageBtn.className = 'btn btn-sm btn-outline-primary me-1';
+        lastPageBtn.textContent = totalPages;
+        lastPageBtn.addEventListener('click', function() {
+            currentPage = totalPages;
+            loadCustomers();
+        });
+        pagination.appendChild(lastPageBtn);
     }
     
     // Next button
-    const nextDisabled = currentPage >= totalPages ? 'disabled' : '';
-    paginationHtml += `
-    <li class="page-item ${nextDisabled}">
-        <a class="page-link rounded-circle mx-1" href="javascript:void(0)" data-page="${currentPage + 1}" aria-label="Next">
-            <span aria-hidden="true">&raquo;</span>
-        </a>
-    </li>
-    `;
-    
-    paginationHtml += '</ul></nav>';
-    
-    pagination.innerHTML = paginationHtml;
+    const nextBtn = document.createElement('button');
+    nextBtn.className = 'btn btn-sm btn-outline-primary';
+    nextBtn.innerHTML = '&raquo;';
+    if (currentPage === totalPages) {
+        nextBtn.classList.add('disabled');
+    } else {
+        nextBtn.addEventListener('click', function() {
+            currentPage++;
+            loadCustomers();
+        });
+    }
+    pagination.appendChild(nextBtn);
 }
 
 // Function to change page
