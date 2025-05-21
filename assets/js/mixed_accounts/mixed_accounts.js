@@ -181,6 +181,11 @@ function renderPagination(totalPages) {
     const pagination = document.getElementById('pagination');
     pagination.innerHTML = '';
     
+    // Add a container div for centering the pagination
+    const paginationContainer = document.createElement('div');
+    paginationContainer.className = 'd-flex justify-content-center my-3';
+    pagination.appendChild(paginationContainer);
+    
     if (totalPages <= 1) {
         return;
     }
@@ -192,12 +197,14 @@ function renderPagination(totalPages) {
     if (currentPage === 1) {
         prevBtn.classList.add('disabled');
     } else {
-        prevBtn.addEventListener('click', function() {
+        prevBtn.addEventListener('click', function(e) {
+            e.preventDefault();
             currentPage--;
             loadMixedAccounts();
+            return false; // Prevent default action and bubbling
         });
     }
-    pagination.appendChild(prevBtn);
+    paginationContainer.appendChild(prevBtn);
     
     // Calculate range of pages to show
     let startPage = Math.max(1, currentPage - 2);
@@ -213,17 +220,19 @@ function renderPagination(totalPages) {
         const firstPageBtn = document.createElement('button');
         firstPageBtn.className = 'btn btn-sm btn-outline-primary me-1';
         firstPageBtn.textContent = '1';
-        firstPageBtn.addEventListener('click', function() {
+        firstPageBtn.addEventListener('click', function(e) {
+            e.preventDefault();
             currentPage = 1;
             loadMixedAccounts();
+            return false; // Prevent default action and bubbling
         });
-        pagination.appendChild(firstPageBtn);
+        paginationContainer.appendChild(firstPageBtn);
         
         if (startPage > 2) {
             const ellipsis = document.createElement('span');
             ellipsis.className = 'btn btn-sm btn-outline-primary me-1 disabled';
             ellipsis.textContent = '...';
-            pagination.appendChild(ellipsis);
+            paginationContainer.appendChild(ellipsis);
         }
     }
     
@@ -235,11 +244,13 @@ function renderPagination(totalPages) {
             pageBtn.classList.add('active');
         }
         pageBtn.textContent = i;
-        pageBtn.addEventListener('click', function() {
+        pageBtn.addEventListener('click', function(e) {
+            e.preventDefault();
             currentPage = i;
             loadMixedAccounts();
+            return false; // Prevent default action and bubbling
         });
-        pagination.appendChild(pageBtn);
+        paginationContainer.appendChild(pageBtn);
     }
     
     // Last page
@@ -248,17 +259,19 @@ function renderPagination(totalPages) {
             const ellipsis = document.createElement('span');
             ellipsis.className = 'btn btn-sm btn-outline-primary me-1 disabled';
             ellipsis.textContent = '...';
-            pagination.appendChild(ellipsis);
+            paginationContainer.appendChild(ellipsis);
         }
         
         const lastPageBtn = document.createElement('button');
         lastPageBtn.className = 'btn btn-sm btn-outline-primary me-1';
         lastPageBtn.textContent = totalPages;
-        lastPageBtn.addEventListener('click', function() {
+        lastPageBtn.addEventListener('click', function(e) {
+            e.preventDefault();
             currentPage = totalPages;
             loadMixedAccounts();
+            return false; // Prevent default action and bubbling
         });
-        pagination.appendChild(lastPageBtn);
+        paginationContainer.appendChild(lastPageBtn);
     }
     
     // Next button
@@ -268,12 +281,14 @@ function renderPagination(totalPages) {
     if (currentPage === totalPages) {
         nextBtn.classList.add('disabled');
     } else {
-        nextBtn.addEventListener('click', function() {
+        nextBtn.addEventListener('click', function(e) {
+            e.preventDefault();
             currentPage++;
             loadMixedAccounts();
+            return false; // Prevent default action and bubbling
         });
     }
-    pagination.appendChild(nextBtn);
+    paginationContainer.appendChild(nextBtn);
 }
 
 // Function to change page
