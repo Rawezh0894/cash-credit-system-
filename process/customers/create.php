@@ -26,11 +26,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             'phone2' => !empty($_POST['phone2']) ? trim($_POST['phone2']) : null,
             'guarantor_name' => !empty($_POST['guarantor_name']) ? trim($_POST['guarantor_name']) : null,
             'guarantor_phone' => !empty($_POST['guarantor_phone']) ? trim($_POST['guarantor_phone']) : null,
-            'owed_amount' => !empty($_POST['owed_amount']) ? (float)$_POST['owed_amount'] : 0,
-            'advance_payment' => !empty($_POST['advance_payment']) ? (float)$_POST['advance_payment'] : 0,
-            'city' => !empty($_POST['city']) ? trim($_POST['city']) : '',
-            'location' => $_POST['location'],
-            'notes' => !empty($_POST['notes']) ? trim($_POST['notes']) : null,
+            'address' => !empty($_POST['address']) ? $_POST['address'] : null,
+            'city' => !empty($_POST['city']) ? $_POST['city'] : null,
+            'location' => !empty($_POST['location']) ? $_POST['location'] : null,
+            'notes' => !empty($_POST['notes']) ? $_POST['notes'] : null,
+            'owed_amount' => !empty($_POST['owed_amount']) ? max(0, (float)$_POST['owed_amount']) : 0,
+            'advance_payment' => !empty($_POST['advance_payment']) ? max(0, (float)$_POST['advance_payment']) : 0,
             'created_by' => $_SESSION['user_id']
         ];
         
@@ -44,8 +45,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             exit();
         }
         
-        $sql = "INSERT INTO customers (customer_type_id, name, phone1, phone2, guarantor_name, guarantor_phone, owed_amount, advance_payment, city, location, notes, created_by) 
-                VALUES (:customer_type_id, :name, :phone1, :phone2, :guarantor_name, :guarantor_phone, :owed_amount, :advance_payment, :city, :location, :notes, :created_by)";
+        $sql = "INSERT INTO customers (customer_type_id, name, phone1, phone2, guarantor_name, guarantor_phone, address, city, location, notes, owed_amount, advance_payment, created_by) 
+                VALUES (:customer_type_id, :name, :phone1, :phone2, :guarantor_name, :guarantor_phone, :address, :city, :location, :notes, :owed_amount, :advance_payment, :created_by)";
         
         $stmt = $db->prepare($sql);
         $stmt->bindParam(':customer_type_id', $data['customer_type_id']);
@@ -54,11 +55,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $stmt->bindParam(':phone2', $data['phone2']);
         $stmt->bindParam(':guarantor_name', $data['guarantor_name']);
         $stmt->bindParam(':guarantor_phone', $data['guarantor_phone']);
-        $stmt->bindParam(':owed_amount', $data['owed_amount']);
-        $stmt->bindParam(':advance_payment', $data['advance_payment']);
+        $stmt->bindParam(':address', $data['address']);
         $stmt->bindParam(':city', $data['city']);
         $stmt->bindParam(':location', $data['location']);
         $stmt->bindParam(':notes', $data['notes']);
+        $stmt->bindParam(':owed_amount', $data['owed_amount']);
+        $stmt->bindParam(':advance_payment', $data['advance_payment']);
         $stmt->bindParam(':created_by', $data['created_by']);
         
         $stmt->execute();

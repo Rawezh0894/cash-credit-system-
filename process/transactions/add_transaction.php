@@ -102,7 +102,7 @@ try {
     if ($account_type === 'customer') {
         if ($type === 'credit') {
             // Check for advance payment and deduct if available
-            $stmt = $conn->prepare("SELECT advance_payment FROM customers WHERE id = :customer_id");
+            $stmt = $conn->prepare("SELECT advance_payment, owed_amount FROM customers WHERE id = :customer_id");
             $stmt->bindParam(':customer_id', $customer_id, PDO::PARAM_INT);
             $stmt->execute();
             $customer = $stmt->fetch(PDO::FETCH_ASSOC);
@@ -132,6 +132,11 @@ try {
                 $stmt->bindParam(':customer_id', $customer_id, PDO::PARAM_INT);
                 $stmt->execute();
             }
+            
+            // Ensure owed_amount is never negative
+            $stmt = $conn->prepare("UPDATE customers SET owed_amount = GREATEST(owed_amount, 0) WHERE id = :customer_id");
+            $stmt->bindParam(':customer_id', $customer_id, PDO::PARAM_INT);
+            $stmt->execute();
         } elseif ($type === 'cash') {
             // No change to balance for cash transaction
         } elseif ($type === 'advance') {
