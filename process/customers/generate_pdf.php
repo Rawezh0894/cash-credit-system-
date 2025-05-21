@@ -86,11 +86,14 @@ $current_balance = $stmt->fetch(PDO::FETCH_ASSOC);
 // Use the actual current values from the database
 $owed_amount = floatval($current_balance['owed_amount']);
 $advance_payment = floatval($current_balance['advance_payment']);
-
-if ($owed_amount < 0) $owed_amount = 0;
-if ($advance_payment < 0) $advance_payment = 0;
-
 $balance = $owed_amount - $advance_payment;
+if ($balance > 0) {
+    $balance_text = number_format($balance) . ' د.ع (قەرز)';
+} elseif ($balance < 0) {
+    $balance_text = number_format(abs($balance)) . ' د.ع (پێشەکی زیادە)';
+} else {
+    $balance_text = '0 د.ع (هیچ)';
+}
 
 header('Content-Type: text/html; charset=utf-8');
 ?>
@@ -219,15 +222,7 @@ header('Content-Type: text/html; charset=utf-8');
                     <td colspan="3" class="text-end"><strong>باڵانسی کۆتایی</strong></td>
                     <td colspan="3">
                         <strong>
-                            <?php if ($balance > 0): ?>
-                                <?php echo number_format($balance); ?> د.ع
-                                <span class="text-danger">(قەرزارە)</span>
-                            <?php elseif ($balance < 0): ?>
-                                <?php echo number_format(abs($balance)); ?> د.ع
-                                <span class="text-success">(پارەی پێشەکی)</span>
-                            <?php else: ?>
-                                0 د.ع
-                            <?php endif; ?>
+                            <?php echo $balance_text; ?>
                         </strong>
                     </td>
                 </tr>
@@ -236,15 +231,7 @@ header('Content-Type: text/html; charset=utf-8');
             <div class="mt-4 text-end">
                 <strong>
                     باڵانسی کۆتایی: 
-                    <?php if ($balance > 0): ?>
-                        <?php echo number_format($balance); ?> د.ع
-                        <span class="text-danger">(قەرزارە)</span>
-                    <?php elseif ($balance < 0): ?>
-                        <?php echo number_format(abs($balance)); ?> د.ع
-                        <span class="text-success">(پارەی پێشەکی)</span>
-                    <?php else: ?>
-                        0 د.ع
-                    <?php endif; ?>
+                    <?php echo $balance_text; ?>
                 </strong>
             </div>
         </div>

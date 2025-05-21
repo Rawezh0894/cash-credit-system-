@@ -116,10 +116,24 @@ if ($they_advance < 0) $they_advance = 0;
 if ($we_advance < 0) $we_advance = 0;
 
 // Calculate customer balance (they owe us)
-$customer_balance = ($they_owe - $they_advance);
+$customer_balance = $they_owe - $they_advance;
+if ($customer_balance > 0) {
+    $customer_balance_text = number_format($customer_balance) . ' د.ع (قەرز)';
+} elseif ($customer_balance < 0) {
+    $customer_balance_text = number_format(abs($customer_balance)) . ' د.ع (پێشەکی زیادە)';
+} else {
+    $customer_balance_text = '0 د.ع (هیچ)';
+}
 
 // Calculate supplier balance (we owe them)
-$supplier_balance = ($we_owe - $we_advance);
+$supplier_balance = $we_owe - $we_advance;
+if ($supplier_balance > 0) {
+    $supplier_balance_text = number_format($supplier_balance) . ' د.ع (قەرز)';
+} elseif ($supplier_balance < 0) {
+    $supplier_balance_text = number_format(abs($supplier_balance)) . ' د.ع (پێشەکی زیادە)';
+} else {
+    $supplier_balance_text = '0 د.ع (هیچ)';
+}
 
 // Log the calculated values for debugging
 error_log("Customer transactions balance: " . $customer_balance);
@@ -265,15 +279,13 @@ header('Content-Type: text/html; charset=utf-8');
                             // Display final balances
                             if ($final_customer_balance > 0): ?>
                                 <div class="mb-2">
-                                    <?php echo number_format($final_customer_balance); ?> د.ع
-                                    <span class="text-danger">(قەرزارە)</span>
+                                    <?php echo $customer_balance_text; ?>
                                 </div>
                             <?php endif;
                             
                             if ($final_supplier_balance > 0): ?>
                                 <div>
-                                    <?php echo number_format($final_supplier_balance); ?> د.ع
-                                    <span class="text-danger">(قەرزارم)</span>
+                                    <?php echo $supplier_balance_text; ?>
                                 </div>
                             <?php endif;
                             
@@ -309,15 +321,13 @@ header('Content-Type: text/html; charset=utf-8');
                     // Display final balances again - use the same values calculated above
                     if ($final_customer_balance > 0): ?>
                         <div class="mb-2">
-                            <?php echo number_format($final_customer_balance); ?> د.ع
-                            <span class="text-danger">(قەرزارە)</span>
+                            <?php echo $customer_balance_text; ?>
                         </div>
                     <?php endif;
                     
                     if ($final_supplier_balance > 0): ?>
                         <div>
-                            <?php echo number_format($final_supplier_balance); ?> د.ع
-                            <span class="text-danger">(قەرزارم)</span>
+                            <?php echo $supplier_balance_text; ?>
                         </div>
                     <?php endif;
                     
