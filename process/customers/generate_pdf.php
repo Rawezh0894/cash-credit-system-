@@ -71,8 +71,17 @@ $stmt = $conn->prepare("SELECT owed_amount, advance_payment FROM customers WHERE
 $stmt->execute([$customer_id]);
 $current_balance = $stmt->fetch(PDO::FETCH_ASSOC);
 
-$owed_amount = floatval($current_balance['owed_amount']);
-$advance_payment = floatval($current_balance['advance_payment']);
+$has_credit_transaction = floatval($calculated_balance['credit_amount']) > 0;
+
+if ($has_credit_transaction) {
+    // If there are credit transactions, calculate based on transactions only
+    $owed_amount = floatval($calculated_balance['credit_amount']) - (floatval($calculated_balance['collection_amount']) + floatval($calculated_balance['payment_amount']));
+    $advance_payment = floatval($calculated_balance['advance_amount']) - floatval($calculated_balance['advance_refund']);
+} else {
+    // If no credit transactions, use the initial owed_amount from the database
+    $owed_amount = floatval($current_balance['owed_amount']);
+    $advance_payment = floatval($current_balance['advance_payment']);
+}
 
 if ($owed_amount < 0) $owed_amount = 0;
 if ($advance_payment < 0) $advance_payment = 0;

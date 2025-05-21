@@ -125,12 +125,14 @@ try {
                     $stmt->bindParam(':customer_id', $customer_id, PDO::PARAM_INT);
                     $stmt->execute();
                 }
+                
+                // Since we've already handled the accounting for advance payment and remaining debt,
+                // we should skip the automatic recalculation at the end of this transaction
+                $skip_recalculation = true;
             } else {
-                // No advance payment, add full amount to owed_amount
-                $stmt = $conn->prepare("UPDATE customers SET owed_amount = owed_amount + :amount WHERE id = :customer_id");
-                $stmt->bindParam(':amount', $amount);
-                $stmt->bindParam(':customer_id', $customer_id, PDO::PARAM_INT);
-                $stmt->execute();
+                // No advance payment, add full amount to owed_amount - this will be handled in the 
+                // recalculation at the end of the transaction
+                $skip_recalculation = false;
             }
         } elseif ($type === 'cash') {
             // No change to balance for cash transaction
