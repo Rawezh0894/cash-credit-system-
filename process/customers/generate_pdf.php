@@ -64,6 +64,10 @@ $stmt = $conn->prepare("
             ELSE 0 
         END) as collection_amount,
         SUM(CASE 
+            WHEN type = 'payment' THEN amount
+            ELSE 0 
+        END) as payment_amount,
+        SUM(CASE 
             WHEN type = 'advance' THEN amount
             ELSE 0 
         END) as advance_amount,
@@ -77,20 +81,52 @@ $stmt = $conn->prepare("
 $stmt->execute([$customer_id]);
 $calculated_balance = $stmt->fetch(PDO::FETCH_ASSOC);
 
+
 // We need to get the actual current balances from database, as the balance is calculated
 // and adjusted during transaction processing (especially for credit vs advance interaction)
 $stmt = $conn->prepare("SELECT owed_amount, advance_payment FROM customers WHERE id = ?");
 $stmt->execute([$customer_id]);
 $current_balance = $stmt->fetch(PDO::FETCH_ASSOC);
 
-// Use the actual current values from the database
-$owed_amount = floatval($current_balance['owed_amount']);
-$advance_payment = floatval($current_balance['advance_payment']);
+// Show debug information - hidden in HTML comment
+echo "<!-- \n";
+echo "Database values: \n";
+echo "owed_amount: " . $current_balance['owed_amount'] . "\n";
+echo "advance_payment: " . $current_balance['advance_payment'] . "\n\n";
+
+echo "Calculated values: \n";
+echo "credit_amount: " . $calculated_balance['credit_amount'] . "\n";
+echo "collection_amount: " . $calculated_balance['collection_amount'] . "\n";
+echo "payment_amount: " . $calculated_balance['payment_amount'] . "\n";
+echo "advance_amount: " . $calculated_balance['advance_amount'] . "\n";
+echo "advance_refund: " . $calculated_balance['advance_refund'] . "\n";
+echo "-->\n";
+
+// Calculate balance from transactions instead of using database value
+// This fixes the issue where the database value might be incorrect due to application bugs
+$owed_amount = floatval($calculated_balance['credit_amount']) - 
+              (floatval($calculated_balance['collection_amount']) + floatval($calculated_balance['payment_amount']));
+
+$advance_payment = floatval($calculated_balance['advance_amount']) - 
+                 floatval($calculated_balance['advance_refund']);
 
 if ($owed_amount < 0) $owed_amount = 0;
 if ($advance_payment < 0) $advance_payment = 0;
 
 $balance = $owed_amount - $advance_payment;
+if ($advance_payment > $owed_amount) {
+    $balance = $advance_payment * -1; // Negative balance means customer has advance payment
+}
+
+// More debug info
+echo "<!-- \n";
+echo "Final calculated values: \n";
+echo "owed_amount: " . $owed_amount . "\n";
+echo "advance_payment: " . $advance_payment . "\n";
+echo "balance: " . $balance . "\n";
+echo "-->\n";
+
+
 
 header('Content-Type: text/html; charset=utf-8');
 ?>
