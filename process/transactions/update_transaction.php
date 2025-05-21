@@ -129,8 +129,8 @@ try {
             $stmt->bindParam(':customer_id', $originalTransaction['customer_id'], PDO::PARAM_INT);
             $stmt->execute();
         } elseif ($originalTransaction['type'] === 'collection') {
-            // Revert collection (قەرز وەرگرتنەوە) - add back the customer's owed amount
-            $stmt = $conn->prepare("UPDATE customers SET owed_amount = owed_amount + :amount WHERE id = :customer_id");
+            // Revert collection (قەرز وەرگرتنەوە) - add back the customer's advance payment
+            $stmt = $conn->prepare("UPDATE customers SET advance_payment = advance_payment + :amount WHERE id = :customer_id");
             $stmt->bindParam(':amount', $originalTransaction['amount']);
             $stmt->bindParam(':customer_id', $originalTransaction['customer_id'], PDO::PARAM_INT);
             $stmt->execute();
@@ -161,8 +161,8 @@ try {
             $stmt->bindParam(':supplier_id', $originalTransaction['supplier_id'], PDO::PARAM_INT);
             $stmt->execute();
         } elseif ($originalTransaction['type'] === 'collection') {
-            // Revert collection (قەرز وەرگرتنەوە) - add back the supplier's we_owe
-            $stmt = $conn->prepare("UPDATE suppliers SET we_owe = we_owe + :amount WHERE id = :supplier_id");
+            // Revert collection (قەرز وەرگرتنەوە) - add back the supplier's advance payment
+            $stmt = $conn->prepare("UPDATE suppliers SET advance_payment = advance_payment + :amount WHERE id = :supplier_id");
             $stmt->bindParam(':amount', $originalTransaction['amount']);
             $stmt->bindParam(':supplier_id', $originalTransaction['supplier_id'], PDO::PARAM_INT);
             $stmt->execute();
@@ -194,8 +194,8 @@ try {
                 $stmt->bindParam(':mixed_account_id', $originalTransaction['mixed_account_id'], PDO::PARAM_INT);
                 $stmt->execute();
             } elseif ($originalTransaction['type'] === 'collection') {
-                // Revert collection (قەرز وەرگرتنەوە) - add back we_owe
-                $stmt = $conn->prepare("UPDATE mixed_accounts SET we_owe = we_owe + :amount WHERE id = :mixed_account_id");
+                // Revert collection (قەرز وەرگرتنەوە) - add back they_advance
+                $stmt = $conn->prepare("UPDATE mixed_accounts SET they_advance = they_advance + :amount WHERE id = :mixed_account_id");
                 $stmt->bindParam(':amount', $originalTransaction['amount']);
                 $stmt->bindParam(':mixed_account_id', $originalTransaction['mixed_account_id'], PDO::PARAM_INT);
                 $stmt->execute();
@@ -226,8 +226,8 @@ try {
                 $stmt->bindParam(':mixed_account_id', $originalTransaction['mixed_account_id'], PDO::PARAM_INT);
                 $stmt->execute();
             } elseif ($originalTransaction['type'] === 'collection') {
-                // Revert collection (قەرز وەرگرتنەوە) - add back we_owe
-                $stmt = $conn->prepare("UPDATE mixed_accounts SET we_owe = we_owe + :amount WHERE id = :mixed_account_id");
+                // Revert collection (قەرز وەرگرتنەوە) - add back we_advance
+                $stmt = $conn->prepare("UPDATE mixed_accounts SET we_advance = we_advance + :amount WHERE id = :mixed_account_id");
                 $stmt->bindParam(':amount', $originalTransaction['amount']);
                 $stmt->bindParam(':mixed_account_id', $originalTransaction['mixed_account_id'], PDO::PARAM_INT);
                 $stmt->execute();
@@ -347,28 +347,27 @@ try {
                 $stmt->execute();
             }
         } elseif ($type === 'collection') {
-            // قەرز وەرگرتنەوە - کەمکردنەوەی قەرز
-            $stmt = $conn->prepare("SELECT COALESCE(owed_amount, 0) as owed_amount FROM customers WHERE id = :customer_id");
+            // قەرز وەرگرتنەوە - کەمکردنەوەی پێشەکی
+            $stmt = $conn->prepare("SELECT advance_payment FROM customers WHERE id = :customer_id");
             $stmt->bindParam(':customer_id', $customer_id, PDO::PARAM_INT);
             $stmt->execute();
             $customer = $stmt->fetch(PDO::FETCH_ASSOC);
             
-            if ($customer['owed_amount'] < $amount) {
-                // ناتوانرێت بڕی قەرز وەرگرتنەوە زیاتر بێت لە قەرز
-                $conn->rollBack();
-                $response = [
-                    'success' => false,
-                    'message' => 'ناتوانرێت بڕی قەرز وەرگرتنەوە زیاتر بێت لە قەرزی کڕیار. قەرزی ئێستا: ' . number_format($customer['owed_amount'], 0) . ' د.ع'
-                ];
-                echo json_encode($response);
-                exit();
+            if ($customer['advance_payment'] >= $amount) {
+                // Decrease advance_payment
+                $stmt = $conn->prepare("UPDATE customers SET advance_payment = advance_payment - :amount WHERE id = :customer_id");
+                $stmt->bindParam(':amount', $amount);
+                $stmt->bindParam(':customer_id', $customer_id, PDO::PARAM_INT);
+                $stmt->execute();
+            } else {
+                // Decrease all advance_payment and add remaining to owed_amount
+                $remaining = $amount - $customer['advance_payment'];
+                
+                $stmt = $conn->prepare("UPDATE customers SET advance_payment = 0, owed_amount = owed_amount + :remaining WHERE id = :customer_id");
+                $stmt->bindParam(':remaining', $remaining);
+                $stmt->bindParam(':customer_id', $customer_id, PDO::PARAM_INT);
+                $stmt->execute();
             }
-            
-            // Decrease owed_amount
-            $stmt = $conn->prepare("UPDATE customers SET owed_amount = owed_amount - :amount WHERE id = :customer_id");
-            $stmt->bindParam(':amount', $amount);
-            $stmt->bindParam(':customer_id', $customer_id, PDO::PARAM_INT);
-            $stmt->execute();
         }
     } elseif ($account_type === 'supplier') {
         if ($type === 'credit') {
@@ -619,22 +618,22 @@ try {
                 }
             } elseif ($type === 'collection') {
                 // قەرز وەرگرتنەوە - کەمکردنەوەی پێشەکی ئێمە
-                $stmt = $conn->prepare("SELECT we_owe FROM mixed_accounts WHERE id = :mixed_account_id");
+                $stmt = $conn->prepare("SELECT we_advance FROM mixed_accounts WHERE id = :mixed_account_id");
                 $stmt->bindParam(':mixed_account_id', $mixed_account_id, PDO::PARAM_INT);
                 $stmt->execute();
                 $mixed_account = $stmt->fetch(PDO::FETCH_ASSOC);
                 
-                if ($mixed_account['we_owe'] >= $amount) {
-                    // Decrease we_owe
-                    $stmt = $conn->prepare("UPDATE mixed_accounts SET we_owe = we_owe - :amount WHERE id = :mixed_account_id");
+                if ($mixed_account['we_advance'] >= $amount) {
+                    // Decrease we_advance
+                    $stmt = $conn->prepare("UPDATE mixed_accounts SET we_advance = we_advance - :amount WHERE id = :mixed_account_id");
                     $stmt->bindParam(':amount', $amount);
                     $stmt->bindParam(':mixed_account_id', $mixed_account_id, PDO::PARAM_INT);
                     $stmt->execute();
                 } else {
-                    // Decrease all we_owe and add remaining to we_advance
-                    $remaining = $amount - $mixed_account['we_owe'];
+                    // Decrease all we_advance and add remaining to we_owe
+                    $remaining = $amount - $mixed_account['we_advance'];
                     
-                    $stmt = $conn->prepare("UPDATE mixed_accounts SET we_owe = 0, we_advance = we_advance + :remaining WHERE id = :mixed_account_id");
+                    $stmt = $conn->prepare("UPDATE mixed_accounts SET we_advance = 0, we_owe = we_owe + :remaining WHERE id = :mixed_account_id");
                     $stmt->bindParam(':remaining', $remaining);
                     $stmt->bindParam(':mixed_account_id', $mixed_account_id, PDO::PARAM_INT);
                     $stmt->execute();
@@ -683,6 +682,19 @@ try {
             $stmt->bindParam(':file_path', $file_path);
             $stmt->execute();
         }
+    }
+    
+    // After all customer transaction updates, recalculate owed_amount to ensure it is never null
+    if ($account_type === 'customer') {
+        $stmt = $conn->prepare("SELECT SUM(amount - paid_amount) FROM transactions WHERE customer_id = :customer_id AND type = 'credit'");
+        $stmt->bindParam(':customer_id', $customer_id, PDO::PARAM_INT);
+        $stmt->execute();
+        $new_owed = $stmt->fetchColumn();
+        if ($new_owed === null) $new_owed = 0;
+        $stmt = $conn->prepare("UPDATE customers SET owed_amount = :owed WHERE id = :customer_id");
+        $stmt->bindParam(':owed', $new_owed);
+        $stmt->bindParam(':customer_id', $customer_id, PDO::PARAM_INT);
+        $stmt->execute();
     }
     
     $conn->commit();

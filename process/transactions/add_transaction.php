@@ -187,7 +187,7 @@ try {
             }
         } elseif ($type === 'collection') {
             // قەرز وەرگرتنەوە - کەمکردنەوەی قەرز
-            $stmt = $conn->prepare("SELECT COALESCE(owed_amount, 0) as owed_amount FROM customers WHERE id = :customer_id");
+            $stmt = $conn->prepare("SELECT owed_amount FROM customers WHERE id = :customer_id");
             $stmt->bindParam(':customer_id', $customer_id, PDO::PARAM_INT);
             $stmt->execute();
             $customer = $stmt->fetch(PDO::FETCH_ASSOC);
@@ -239,6 +239,7 @@ try {
             $stmt->bindParam(':customer_id', $customer_id, PDO::PARAM_INT);
             $stmt->execute();
             $new_owed = $stmt->fetchColumn();
+            if ($new_owed === null) $new_owed = 0;
             $stmt = $conn->prepare("UPDATE customers SET owed_amount = :owed WHERE id = :customer_id");
             $stmt->bindParam(':owed', $new_owed);
             $stmt->bindParam(':customer_id', $customer_id, PDO::PARAM_INT);
