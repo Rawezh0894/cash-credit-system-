@@ -131,10 +131,11 @@ function renderCustomers(customers) {
         const canEdit = editPerm.success && editPerm.has_permission;
         const canDelete = deletePerm.success && deletePerm.has_permission;
         
-        customers.forEach((customer, index) => {
+        let rowNumber = 1;
+        customers.forEach((customer) => {
             const tr = document.createElement('tr');
             tr.innerHTML = `
-                <td class="border">${index + 1}</td>
+                <td class="border">${rowNumber++}</td>
                 <td class="border text-break">${safeCell(customer.name)}</td>
                 <td class="border text-break">${safeCell(customer.phone1)}</td>
                 <td class="border text-break">${formatNumber(customer.owed_amount)}</td>
@@ -167,11 +168,11 @@ function renderCustomers(customers) {
     }).catch(error => {
         console.error('Error checking permissions:', error);
         
-        // Still render the customer list but without action buttons
-        customers.forEach((customer, index) => {
+        let rowNumber = 1;
+        customers.forEach((customer) => {
             const tr = document.createElement('tr');
             tr.innerHTML = `
-                <td class="border">${index + 1}</td>
+                <td class="border">${rowNumber++}</td>
                 <td class="border text-break">${safeCell(customer.name)}</td>
                 <td class="border text-break">${safeCell(customer.phone1)}</td>
                 <td class="border text-break">${formatNumber(customer.owed_amount)}</td>
