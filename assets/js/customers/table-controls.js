@@ -6,6 +6,18 @@ function changePerPage(value) {
     window.location.href = url.toString();
 }
 
+// Debounce utility function
+function debounce(func, wait) {
+    let timeout;
+    return function(...args) {
+        clearTimeout(timeout);
+        timeout = setTimeout(() => func.apply(this, args), wait);
+    };
+}
+
+// Debounced version of filterTable
+const debouncedFilterTable = debounce(filterTable, 300);
+
 function filterTable(input, columnIndex) {
     const searchValue = input.value.trim();
     if (!searchValue) {
@@ -61,4 +73,12 @@ function filterTable(input, columnIndex) {
             const pagination = document.getElementById('pagination');
             if (pagination) pagination.style.display = 'none';
         });
-} 
+}
+
+// On DOMContentLoaded, replace all onkeyup="filterTable(this, ...)" with debouncedFilterTable
+window.addEventListener('DOMContentLoaded', function() {
+    document.querySelectorAll('.table-header-with-search input').forEach((input, idx) => {
+        // Remove any inline onkeyup if present
+        input.onkeyup = function() { debouncedFilterTable(this, idx + 1); };
+    });
+}); 
