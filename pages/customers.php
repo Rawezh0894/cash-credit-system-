@@ -302,57 +302,36 @@ if (isset($_SESSION['error_message'])) {
                                         <th class="border">
                                             <div class="table-header-with-search">
                                                 <div class="header-text">ناو</div>
-                                                <div class="column-search">
-                                                    <input type="text" class="form-control" placeholder="گەڕان بە ناو..." onkeyup="filterTable(this, 1)">
-                                                </div>
                                             </div>
                                         </th>
                                         <th class="border">
                                             <div class="table-header-with-search">
                                                 <div class="header-text">ژمارەی مۆبایل</div>
-                                                <div class="column-search">
-                                                    <input type="text" class="form-control" placeholder="گەڕان بە ژمارە..." onkeyup="filterTable(this, 2)">
-                                                </div>
                                             </div>
                                         </th>
                                         <th class="border">
                                             <div class="table-header-with-search">
                                                 <div class="header-text">بڕی قەرز</div>
-                                                <div class="column-search">
-                                                    <input type="text" class="form-control" placeholder="گەڕان بە بڕ..." onkeyup="filterTable(this, 3)">
-                                                </div>
                                             </div>
                                         </th>
                                         <th class="border">
                                             <div class="table-header-with-search">
                                                 <div class="header-text">بڕی پێشەکی</div>
-                                                <div class="column-search">
-                                                    <input type="text" class="form-control" placeholder="گەڕان بە بڕ..." onkeyup="filterTable(this, 4)">
-                                                </div>
                                             </div>
                                         </th>
                                         <th class="border">
                                             <div class="table-header-with-search">
                                                 <div class="header-text">ناوی شار</div>
-                                                <div class="column-search">
-                                                    <input type="text" class="form-control" placeholder="گەڕان بە شار..." onkeyup="filterTable(this, 5)">
-                                                </div>
                                             </div>
                                         </th>
                                         <th class="border">
                                             <div class="table-header-with-search">
                                                 <div class="header-text">شوێن</div>
-                                                <div class="column-search">
-                                                    <input type="text" class="form-control" placeholder="گەڕان بە شوێن..." onkeyup="filterTable(this, 6)">
-                                                </div>
                                             </div>
                                         </th>
                                         <th class="border">
                                             <div class="table-header-with-search">
                                                 <div class="header-text">جۆر</div>
-                                                <div class="column-search">
-                                                    <input type="text" class="form-control" placeholder="گەڕان بە جۆر..." onkeyup="filterTable(this, 7)">
-                                                </div>
                                             </div>
                                         </th>
                                         <th class="border">کردارەکان</th>
