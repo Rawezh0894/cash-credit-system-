@@ -560,7 +560,7 @@ if (typeof window.resetAllFilters !== 'function') {
         // Reload customers if function exists
         if (typeof loadCustomers === 'function') loadCustomers();
     };
-}
+} 
 
 // --- AJAX-based filter population for select2 filters ---
 function populateAllCustomerFilters() {

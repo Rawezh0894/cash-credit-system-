@@ -438,7 +438,7 @@ function formatNumber(val) {
 
 function viewPerson(id) {
     window.location.href = 'mixed_account_profile.php?id=' + id;
-}
+} 
 
 // --- AJAX-based filter population for select2 filters ---
 function populateAllMixedAccountFilters() {

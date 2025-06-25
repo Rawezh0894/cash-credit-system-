@@ -418,7 +418,7 @@ function formatNumber(val) {
 
 function viewPerson(id) {
     window.location.href = 'supplier_profile.php?id=' + id;
-}
+} 
 
 // --- AJAX-based filter population for select2 filters ---
 function populateAllSupplierFilters() {

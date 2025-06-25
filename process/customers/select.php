@@ -26,6 +26,24 @@ if (isset($_GET['id']) && !empty($_GET['id'])) {
     exit();
 }
 
+// --- Server-side search by column and value ---
+if (!empty($_GET['search_column']) && !empty($_GET['search_value'])) {
+    $allowedColumns = ['name', 'phone1', 'owed_amount', 'advance_payment', 'city', 'location'];
+    $searchColumn = $_GET['search_column'];
+    $searchValue = $_GET['search_value'];
+    if (!in_array($searchColumn, $allowedColumns)) {
+        echo json_encode(['success' => false, 'message' => 'Invalid search column']);
+        exit();
+    }
+    // Use LIKE for partial match (except for owed_amount/advance_payment which can be exact or LIKE)
+    $sql = "SELECT c.*, t.type_name as customer_type_name FROM customers c LEFT JOIN customer_types t ON c.customer_type_id = t.id WHERE c." . $searchColumn . " LIKE ? ORDER BY c.created_at DESC";
+    $stmt = $db->prepare($sql);
+    $stmt->execute(['%' . $searchValue . '%']);
+    $customers = $stmt->fetchAll(PDO::FETCH_ASSOC);
+    echo json_encode(['success' => true, 'data' => $customers, 'totalPages' => 1]);
+    exit();
+}
+
 // Pagination settings
 $recordsPerPage = isset($_GET['per_page']) ? (int)$_GET['per_page'] : 10;
 $currentPage = isset($_GET['page']) ? (int)$_GET['page'] : 1;

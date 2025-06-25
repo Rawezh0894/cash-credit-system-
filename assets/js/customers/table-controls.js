@@ -7,19 +7,58 @@ function changePerPage(value) {
 }
 
 function filterTable(input, columnIndex) {
-    const table = input.closest('table');
-    const rows = table.getElementsByTagName('tr');
-    const filter = input.value.toLowerCase();
-
-    for (let i = 1; i < rows.length; i++) {
-        const cell = rows[i].getElementsByTagName('td')[columnIndex];
-        if (cell) {
-            const text = cell.textContent || cell.innerText;
-            if (text.toLowerCase().indexOf(filter) > -1) {
-                rows[i].style.display = '';
-            } else {
-                rows[i].style.display = 'none';
-            }
-        }
+    const searchValue = input.value.trim();
+    if (!searchValue) {
+        // If search is empty, reload customers and show pagination
+        if (typeof loadCustomers === 'function') loadCustomers();
+        const pagination = document.getElementById('pagination');
+        if (pagination) pagination.style.display = '';
+        return;
     }
+
+    // Map columnIndex to column name in database
+    let searchColumn = '';
+    switch (columnIndex) {
+        case 1:
+            searchColumn = 'name';
+            break;
+        case 2:
+            searchColumn = 'phone1';
+            break;
+        case 3:
+            searchColumn = 'owed_amount';
+            break;
+        case 4:
+            searchColumn = 'advance_payment';
+            break;
+        case 5:
+            searchColumn = 'city';
+            break;
+        case 6:
+            searchColumn = 'location';
+            break;
+        default:
+            searchColumn = '';
+    }
+    if (!searchColumn) return;
+
+    fetch(`../process/customers/select.php?search_column=${encodeURIComponent(searchColumn)}&search_value=${encodeURIComponent(searchValue)}`)
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                if (typeof renderCustomers === 'function') renderCustomers(data.data);
+                // Hide pagination when searching
+                const pagination = document.getElementById('pagination');
+                if (pagination) pagination.style.display = 'none';
+            } else {
+                if (typeof renderCustomers === 'function') renderCustomers([]);
+                const pagination = document.getElementById('pagination');
+                if (pagination) pagination.style.display = 'none';
+            }
+        })
+        .catch(() => {
+            if (typeof renderCustomers === 'function') renderCustomers([]);
+            const pagination = document.getElementById('pagination');
+            if (pagination) pagination.style.display = 'none';
+        });
 } 
