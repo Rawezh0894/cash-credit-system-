@@ -122,7 +122,8 @@ function renderCustomers(customers) {
         tbody.innerHTML = '<tr><td colspan="9" class="text-center border">هیچ کڕیارێک نەدۆزرایەوە</td></tr>';
         return;
     }
-    
+    // Detect if pagination is hidden (search mode)
+    const paginationHidden = document.getElementById('pagination') && document.getElementById('pagination').style.display === 'none';
     // First check permissions
     Promise.all([
         fetch('../includes/check_permission.php?check=edit_customer').then(response => response.json()),
@@ -131,11 +132,12 @@ function renderCustomers(customers) {
         const canEdit = editPerm.success && editPerm.has_permission;
         const canDelete = deletePerm.success && deletePerm.has_permission;
         
-        let rowNumber = 1;
-        customers.forEach((customer) => {
+        customers.forEach((customer, index) => {
             const tr = document.createElement('tr');
+            // Calculate row number based on pagination or search
+            const rowNumber = paginationHidden ? (index + 1) : (((currentPage - 1) * recordsPerPage) + index + 1);
             tr.innerHTML = `
-                <td class="border">${rowNumber++}</td>
+                <td class="border">${rowNumber}</td>
                 <td class="border text-break">${safeCell(customer.name)}</td>
                 <td class="border text-break">${safeCell(customer.phone1)}</td>
                 <td class="border text-break">${formatNumber(customer.owed_amount)}</td>
@@ -167,12 +169,12 @@ function renderCustomers(customers) {
         });
     }).catch(error => {
         console.error('Error checking permissions:', error);
-        
-        let rowNumber = 1;
-        customers.forEach((customer) => {
+        // Still render the customer list but without action buttons
+        customers.forEach((customer, index) => {
             const tr = document.createElement('tr');
+            const rowNumber = paginationHidden ? (index + 1) : (((currentPage - 1) * recordsPerPage) + index + 1);
             tr.innerHTML = `
-                <td class="border">${rowNumber++}</td>
+                <td class="border">${rowNumber}</td>
                 <td class="border text-break">${safeCell(customer.name)}</td>
                 <td class="border text-break">${safeCell(customer.phone1)}</td>
                 <td class="border text-break">${formatNumber(customer.owed_amount)}</td>
