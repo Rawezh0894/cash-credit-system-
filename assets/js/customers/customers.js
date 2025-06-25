@@ -122,8 +122,10 @@ function renderCustomers(customers) {
         tbody.innerHTML = '<tr><td colspan="9" class="text-center border">هیچ کڕیارێک نەدۆزرایەوە</td></tr>';
         return;
     }
+    
     // Detect if pagination is hidden (search mode)
     const paginationHidden = document.getElementById('pagination') && document.getElementById('pagination').style.display === 'none';
+    
     // First check permissions
     Promise.all([
         fetch('../includes/check_permission.php?check=edit_customer').then(response => response.json()),
@@ -132,68 +134,55 @@ function renderCustomers(customers) {
         const canEdit = editPerm.success && editPerm.has_permission;
         const canDelete = deletePerm.success && deletePerm.has_permission;
         
-        customers.forEach((customer, index) => {
-            const tr = document.createElement('tr');
-            // Calculate row number based on pagination or search
-            const rowNumber = paginationHidden ? (index + 1) : (((currentPage - 1) * recordsPerPage) + index + 1);
-            tr.innerHTML = `
-                <td class="border">${rowNumber}</td>
-                <td class="border text-break">${safeCell(customer.name)}</td>
-                <td class="border text-break">${safeCell(customer.phone1)}</td>
-                <td class="border text-break">${formatNumber(customer.owed_amount)}</td>
-                <td class="border text-break">${formatNumber(customer.advance_payment)}</td>
-                <td class="border text-break">${customer.city ? safeCell(customer.city) : '-'}</td>
-                <td class="border text-break">${customer.location === 'inside' ? 'ناو شار' : (customer.location === 'outside' ? 'دەرەوەی شار' : '-')}
-                </td>
-                <td class="border text-break">${customer.customer_type_name ? safeCell(customer.customer_type_name) : '-'}</td>
-                <td class="border">
-                    <a href="javascript:void(0);" class="action-btn person" title="زانیاری کڕیار" onclick="viewPerson(${customer.id})">
-                        <i class="bi bi-person"></i>
-                    </a>
-                    ${canEdit ? `
-                    <a href="javascript:void(0);" class="action-btn edit edit-customer-btn" title="دەستکاری" onclick="editCustomer(${customer.id})">
-                        <i class="bi bi-pencil"></i>
-                    </a>
-                    ` : ''}
-                    ${canDelete ? `
-                    <a href="javascript:void(0);" class="action-btn delete delete-customer-btn" title="سڕینەوە" onclick="deleteCustomer(${customer.id}, this)">
-                        <i class="bi bi-trash"></i>
-                    </a>
-                    ` : ''}
-                    <a href="javascript:void(0);" class="action-btn pdf" title="پسووڵە بە PDF" onclick="generatePdf(${customer.id})">
-                        <i class="bi bi-file-pdf"></i>
-                    </a>
-                </td>
-            `;
-            tbody.appendChild(tr);
-        });
+        // Render customers with permissions
+        renderCustomerRows(customers, paginationHidden, canEdit, canDelete);
+        
     }).catch(error => {
         console.error('Error checking permissions:', error);
-        // Still render the customer list but without action buttons
-        customers.forEach((customer, index) => {
-            const tr = document.createElement('tr');
-            const rowNumber = paginationHidden ? (index + 1) : (((currentPage - 1) * recordsPerPage) + index + 1);
-            tr.innerHTML = `
-                <td class="border">${rowNumber}</td>
-                <td class="border text-break">${safeCell(customer.name)}</td>
-                <td class="border text-break">${safeCell(customer.phone1)}</td>
-                <td class="border text-break">${formatNumber(customer.owed_amount)}</td>
-                <td class="border text-break">${formatNumber(customer.advance_payment)}</td>
-                <td class="border text-break">${customer.city ? safeCell(customer.city) : '-'}</td>
-                <td class="border text-break">${customer.location === 'inside' ? 'ناو شار' : (customer.location === 'outside' ? 'دەرەوەی شار' : '-')}
-                </td>
-                <td class="border text-break">${customer.customer_type_name ? safeCell(customer.customer_type_name) : '-'}</td>
-                <td class="border">
-                    <a href="javascript:void(0);" class="action-btn person" title="زانیاری کڕیار" onclick="viewPerson(${customer.id})">
-                        <i class="bi bi-person"></i>
-                    </a>
-                    <a href="javascript:void(0);" class="action-btn pdf" title="پسووڵە بە PDF" onclick="generatePdf(${customer.id})">
-                        <i class="bi bi-file-pdf"></i>
-                    </a>
-                </td>
-            `;
-            tbody.appendChild(tr);
-        });
+        // Still render the customer list but without edit/delete buttons
+        renderCustomerRows(customers, paginationHidden, false, false);
+    });
+}
+
+// Helper function to render customer rows
+function renderCustomerRows(customers, paginationHidden, canEdit, canDelete) {
+    const tbody = document.getElementById('customersTableBody');
+    
+    customers.forEach((customer, index) => {
+        const tr = document.createElement('tr');
+        // Calculate row number based on pagination or search
+        const rowNumber = paginationHidden ? (index + 1) : (((currentPage - 1) * recordsPerPage) + index + 1);
+        
+        tr.innerHTML = `
+            <td class="border">${rowNumber}</td>
+            <td class="border text-break">${safeCell(customer.name)}</td>
+            <td class="border text-break">${safeCell(customer.phone1)}</td>
+            <td class="border text-break">${formatNumber(customer.owed_amount)}</td>
+            <td class="border text-break">${formatNumber(customer.advance_payment)}</td>
+            <td class="border text-break">${customer.city ? safeCell(customer.city) : '-'}</td>
+            <td class="border text-break">${customer.location === 'inside' ? 'ناو شار' : (customer.location === 'outside' ? 'دەرەوەی شار' : '-')}
+            </td>
+            <td class="border text-break">${customer.customer_type_name ? safeCell(customer.customer_type_name) : '-'}</td>
+            <td class="border">
+                <a href="javascript:void(0);" class="action-btn person" title="زانیاری کڕیار" onclick="viewPerson(${customer.id})">
+                    <i class="bi bi-person"></i>
+                </a>
+                ${canEdit ? `
+                <a href="javascript:void(0);" class="action-btn edit edit-customer-btn" title="دەستکاری" onclick="editCustomer(${customer.id})">
+                    <i class="bi bi-pencil"></i>
+                </a>
+                ` : ''}
+                ${canDelete ? `
+                <a href="javascript:void(0);" class="action-btn delete delete-customer-btn" title="سڕینەوە" onclick="deleteCustomer(${customer.id}, this)">
+                    <i class="bi bi-trash"></i>
+                </a>
+                ` : ''}
+                <a href="javascript:void(0);" class="action-btn pdf" title="پسووڵە بە PDF" onclick="generatePdf(${customer.id})">
+                    <i class="bi bi-file-pdf"></i>
+                </a>
+            </td>
+        `;
+        tbody.appendChild(tr);
     });
 }
 
@@ -480,7 +469,7 @@ function generatePdf(customerId) {
     window.open(`../process/customers/generate_pdf.php?id=${customerId}`, '_blank');
 }
 
-// Function to validate city field and remove any numeric values
+// Function to validate city field and remove any numeric values  
 function validateCityField(input) {
     // Remove any digits from the city field
     input.value = input.value.replace(/\d+(\.\d+)?/g, '').trim();
@@ -604,4 +593,4 @@ function populateAllCustomerFilters() {
 // Call this on page load
 $(document).ready(function() {
     populateAllCustomerFilters();
-}); 
+});
