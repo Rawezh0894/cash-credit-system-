@@ -35,8 +35,12 @@ if (!empty($_GET['search_column']) && !empty($_GET['search_value'])) {
         echo json_encode(['success' => false, 'message' => 'Invalid search column']);
         exit();
     }
-    // Use LIKE for partial match (except for owed_amount/advance_payment which can be exact or LIKE)
-    $sql = "SELECT c.*, t.type_name as customer_type_name FROM customers c LEFT JOIN customer_types t ON c.customer_type_id = t.id WHERE c." . $searchColumn . " LIKE ? ORDER BY c.created_at DESC";
+    // Use DISTINCT for unique results when searching by name
+    if ($searchColumn === 'name') {
+        $sql = "SELECT DISTINCT c.name, c.id, c.phone1, c.phone2, c.guarantor_name, c.guarantor_phone, c.owed_amount, c.advance_payment, c.city, c.location, c.notes, c.customer_type_id, c.created_at, t.type_name as customer_type_name FROM customers c LEFT JOIN customer_types t ON c.customer_type_id = t.id WHERE c.name LIKE ? ORDER BY c.created_at DESC";
+    } else {
+        $sql = "SELECT c.*, t.type_name as customer_type_name FROM customers c LEFT JOIN customer_types t ON c.customer_type_id = t.id WHERE c." . $searchColumn . " LIKE ? ORDER BY c.created_at DESC";
+    }
     $stmt = $db->prepare($sql);
     $stmt->execute(['%' . $searchValue . '%']);
     $customers = $stmt->fetchAll(PDO::FETCH_ASSOC);
