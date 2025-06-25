@@ -18,7 +18,12 @@ function debounce(func, wait) {
 // Debounced version of filterTable
 const debouncedFilterTable = debounce(filterTable, 300);
 
+// Global AbortController for fetch cancellation
+let lastFetchController = null;
+
 function filterTable(input, columnIndex) {
+    if (lastFetchController) lastFetchController.abort();
+    lastFetchController = new AbortController();
     const searchValue = input.value.trim();
     if (!searchValue) {
         // If search is empty, reload customers and show pagination
@@ -54,7 +59,7 @@ function filterTable(input, columnIndex) {
     }
     if (!searchColumn) return;
 
-    fetch(`../process/customers/select.php?search_column=${encodeURIComponent(searchColumn)}&search_value=${encodeURIComponent(searchValue)}`)
+    fetch(`../process/customers/select.php?search_column=${encodeURIComponent(searchColumn)}&search_value=${encodeURIComponent(searchValue)}`, { signal: lastFetchController.signal })
         .then(response => response.json())
         .then(data => {
             if (data.success) {
@@ -68,11 +73,40 @@ function filterTable(input, columnIndex) {
                 if (pagination) pagination.style.display = 'none';
             }
         })
-        .catch(() => {
+        .catch((err) => {
+            if (err.name === 'AbortError') return; // Ignore aborted fetches
             if (typeof renderCustomers === 'function') renderCustomers([]);
             const pagination = document.getElementById('pagination');
             if (pagination) pagination.style.display = 'none';
         });
+}
+
+// Patch loadCustomers to use AbortController as well
+if (typeof window.loadCustomers === 'function') {
+    const originalLoadCustomers = window.loadCustomers;
+    window.loadCustomers = function() {
+        if (lastFetchController) lastFetchController.abort();
+        lastFetchController = new AbortController();
+        let url = `../process/customers/select.php?page=${window.currentPage || 1}&per_page=${window.recordsPerPage || 10}`;
+        const typeFilter = document.getElementById('filter_type')?.value;
+        if (typeFilter) {
+            url += `&customer_type_name=${encodeURIComponent(typeFilter)}`;
+        }
+        fetch(url, { signal: lastFetchController.signal })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    if (typeof renderCustomers === 'function') renderCustomers(data.data);
+                    if (typeof renderPagination === 'function') renderPagination(data.totalPages);
+                } else {
+                    if (typeof showSwalAlert2 === 'function') showSwalAlert2('error', 'هەڵە!', data.message);
+                }
+            })
+            .catch(error => {
+                if (error.name === 'AbortError') return;
+                if (typeof showSwalAlert2 === 'function') showSwalAlert2('error', 'هەڵە!', 'هەڵەیەک ڕوویدا لە کاتی بارکردنی کڕیارەکان');
+            });
+    };
 }
 
 // On DOMContentLoaded, replace all onkeyup="filterTable(this, ...)" with debouncedFilterTable
