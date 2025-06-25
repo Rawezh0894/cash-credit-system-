@@ -24,6 +24,7 @@ let perPage = 10;
 let searchParams = {};
 let uploadedFiles = [];
 let editUploadedFiles = [];
+let isSubmitting = false;
 
 // Initialize on document ready
 $(document).ready(function() {
@@ -852,6 +853,10 @@ function clearEditDirectionIfNotNeeded() {
 
 // Add Transaction
 $("#saveTransactionAddBtn").click(function() {
+    if (isSubmitting) return;
+    isSubmitting = true;
+    $(this).prop('disabled', true);
+
     clearDirectionIfNotNeeded();
     const formData = new FormData(document.getElementById("transactionAddForm"));
     
@@ -863,32 +868,24 @@ $("#saveTransactionAddBtn").click(function() {
         contentType: false,
         dataType: "json",
         success: function(data) {
+            isSubmitting = false;
+            $("#saveTransactionAddBtn").prop('disabled', false);
             if (data.success) {
-                // Reset form
                 $("#transactionAddForm")[0].reset();
-                // Don't remove files from dropzone
                 uploadedFiles = [];
                 $("#receipt_files").val("");
-                
-                // Close modal
                 $("#transactionAddModal").modal("hide");
-                
-                // Show success message
                 Swal.fire({
                     icon: 'success',
                     title: 'سەرکەوتوو بوو!',
                     text: data.message,
                     confirmButtonText: 'باشە'
                 });
-                
-                // Reload transactions
                 loadTransactions();
-                
-                // Refresh the SELECT2 filters after adding a transaction
                 const filterConfig = {
-                    '#filter_account_name': 4,  // Account name column
-                    '#filter_transaction_type': 1, // Transaction type column
-                    '#filter_account_type_select2': 5 // Account type column
+                    '#filter_account_name': 4,
+                    '#filter_transaction_type': 1,
+                    '#filter_account_type_select2': 5
                 };
                 refreshFilters(filterConfig);
             } else {
@@ -901,6 +898,8 @@ $("#saveTransactionAddBtn").click(function() {
             }
         },
         error: function() {
+            isSubmitting = false;
+            $("#saveTransactionAddBtn").prop('disabled', false);
             Swal.fire({
                 icon: 'error',
                 title: 'هەڵە!',

@@ -49,6 +49,22 @@ if (empty($type) || empty($amount) || empty($account_type)) {
     exit();
 }
 
+// Prevent duplicate transaction within 5 seconds
+$conn = Database::getInstance();
+$checkStmt = $conn->prepare("SELECT COUNT(*) FROM transactions WHERE type = :type AND amount = :amount AND date = :date AND (customer_id <=> :customer_id) AND (supplier_id <=> :supplier_id) AND (mixed_account_id <=> :mixed_account_id) AND ABS(TIMESTAMPDIFF(SECOND, created_at, NOW())) < 5");
+$checkStmt->execute([
+    ':type' => $type,
+    ':amount' => $amount,
+    ':date' => $date,
+    ':customer_id' => $customer_id,
+    ':supplier_id' => $supplier_id,
+    ':mixed_account_id' => $mixed_account_id
+]);
+if ($checkStmt->fetchColumn() > 0) {
+    echo json_encode(['success' => false, 'message' => 'ئەم مامەڵەیە پێشتر زیادکراوە. تکایە تازە بکەوە.']);
+    exit();
+}
+
 // Convert amount to float
 $amount = floatval($amount);
 
