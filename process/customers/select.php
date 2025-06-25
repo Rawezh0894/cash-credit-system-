@@ -31,25 +31,23 @@ if (!empty($_GET['search_column']) && !empty($_GET['search_value'])) {
     $allowedColumns = ['name', 'phone1', 'owed_amount', 'advance_payment', 'city', 'location'];
     $searchColumn = $_GET['search_column'];
     $searchValue = $_GET['search_value'];
+    
     if (!in_array($searchColumn, $allowedColumns)) {
         echo json_encode(['success' => false, 'message' => 'Invalid search column']);
         exit();
     }
-    // For name search, return only the newest record for each unique name (even if there are exact duplicates)
-    if ($searchColumn === 'name') {
-        $sql = "SELECT * FROM (\n" .
-               "  SELECT c.*, t.type_name as customer_type_name,\n" .
-               "         ROW_NUMBER() OVER (PARTITION BY c.name ORDER BY c.created_at DESC, c.id DESC) as rn\n" .
-               "  FROM customers c\n" .
-               "  LEFT JOIN customer_types t ON c.customer_type_id = t.id\n" .
-               "  WHERE c.name LIKE ?\n" .
-               ") x WHERE x.rn = 1 ORDER BY x.created_at DESC, x.id DESC";
-    } else {
-        $sql = "SELECT c.*, t.type_name as customer_type_name FROM customers c LEFT JOIN customer_types t ON c.customer_type_id = t.id WHERE c." . $searchColumn . " LIKE ? ORDER BY c.created_at DESC";
-    }
+    
+    // Simple search without duplicate filtering - returns all matching records
+    $sql = "SELECT c.*, t.type_name as customer_type_name 
+            FROM customers c 
+            LEFT JOIN customer_types t ON c.customer_type_id = t.id 
+            WHERE c." . $searchColumn . " LIKE ? 
+            ORDER BY c.created_at DESC";
+    
     $stmt = $db->prepare($sql);
     $stmt->execute(['%' . $searchValue . '%']);
     $customers = $stmt->fetchAll(PDO::FETCH_ASSOC);
+    
     echo json_encode(['success' => true, 'data' => $customers, 'totalPages' => 1]);
     exit();
 }
@@ -88,3 +86,4 @@ $customers = $stmt->fetchAll(PDO::FETCH_ASSOC);
 
 echo json_encode(['success' => true, 'data' => $customers, 'totalPages' => $totalPages]);
 exit();
+?>
