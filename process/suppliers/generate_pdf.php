@@ -91,7 +91,29 @@ $advance_payment = floatval($current_balance['advance_payment']);
 if ($we_owe < 0) $we_owe = 0;
 if ($advance_payment < 0) $advance_payment = 0;
 
-$balance = $we_owe - $advance_payment;
+$final_balance = $we_owe - $advance_payment;
+$previous_balances = [];
+$current_balance = $final_balance;
+for ($i = count($transactions) - 1; $i >= 0; $i--) {
+    $previous_balances[$i] = $current_balance;
+    $t = $transactions[$i];
+    if ($t['type'] === 'credit') {
+        $current_balance -= $t['amount'];
+    } elseif ($t['type'] === 'payment' || $t['type'] === 'collection') {
+        $current_balance += $t['amount'];
+    } elseif ($t['type'] === 'advance') {
+        $current_balance += $t['amount'];
+    } elseif ($t['type'] === 'advance_collection') {
+        $current_balance -= $t['amount'];
+    }
+}
+
+$previous_before_last = null;
+if (count($previous_balances) > 1) {
+    $previous_before_last = $previous_balances[count($previous_balances) - 2];
+} elseif (count($previous_balances) === 1) {
+    $previous_before_last = $previous_balances[0];
+}
 
 header('Content-Type: text/html; charset=utf-8');
 ?>
@@ -217,14 +239,22 @@ header('Content-Type: text/html; charset=utf-8');
                     </tr>
                 <?php endforeach; ?>
                 <tr class="table-info">
-                    <td colspan="3" class="text-end"><strong>باڵانسی کۆتایی</strong></td>
+                    <td colspan="3" class="text-end">
+                        <strong>
+                            <?php if ($previous_before_last !== null): ?>
+                                باڵانسی پێش کۆتا مامەڵە: <?php echo number_format($previous_before_last); ?> د.ع<br>
+                            <?php endif; ?>
+                        
+                        </strong>
+                    </td>
                     <td colspan="3">
                         <strong>
-                            <?php if ($balance > 0): ?>
-                                <?php echo number_format($balance); ?> د.ع
+                            <?php if ($final_balance > 0): ?>
+                                باڵانسی کۆتایی:
+                                <?php echo number_format($final_balance); ?> د.ع
                                 <span class="text-danger">(قەرزارم)</span>
-                            <?php elseif ($balance < 0): ?>
-                                <?php echo number_format(abs($balance)); ?> د.ع
+                            <?php elseif ($final_balance < 0): ?>
+                                <?php echo number_format(abs($final_balance)); ?> د.ع
                                 <span class="text-success">(پارەی پێشەکی)</span>
                             <?php else: ?>
                                 0 د.ع
@@ -237,11 +267,11 @@ header('Content-Type: text/html; charset=utf-8');
             <div class="mt-4 text-end">
                 <strong>
                     باڵانسی کۆتایی: 
-                    <?php if ($balance > 0): ?>
-                        <?php echo number_format($balance); ?> د.ع
+                    <?php if ($final_balance > 0): ?>
+                        <?php echo number_format($final_balance); ?> د.ع
                         <span class="text-danger">(قەرزارم)</span>
-                    <?php elseif ($balance < 0): ?>
-                        <?php echo number_format(abs($balance)); ?> د.ع
+                    <?php elseif ($final_balance < 0): ?>
+                        <?php echo number_format(abs($final_balance)); ?> د.ع
                         <span class="text-success">(پارەی پێشەکی)</span>
                     <?php else: ?>
                         0 د.ع

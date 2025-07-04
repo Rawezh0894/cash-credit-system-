@@ -77,13 +77,36 @@ $advance_payment = floatval($current_balance['advance_payment']);
 if ($owed_amount < 0) $owed_amount = 0;
 if ($advance_payment < 0) $advance_payment = 0;
 
-$balance = $owed_amount - $advance_payment;
+$final_balance = $owed_amount - $advance_payment;
+$previous_balances = [];
+$current_balance = $final_balance;
+for ($i = count($transactions) - 1; $i >= 0; $i--) {
+    $previous_balances[$i] = $current_balance;
+    $t = $transactions[$i];
+    if ($t['type'] === 'credit') {
+        $current_balance -= $t['amount'];
+    } elseif ($t['type'] === 'collection' || $t['type'] === 'payment') {
+        $current_balance += $t['amount'];
+    } elseif ($t['type'] === 'advance') {
+        $current_balance += $t['amount'];
+    } elseif ($t['type'] === 'advance_refund') {
+        $current_balance -= $t['amount'];
+    }
+}
+
+// After calculating $previous_balances, get the previous balance before the last transaction
+$previous_before_last = null;
+if (count($previous_balances) > 1) {
+    $previous_before_last = $previous_balances[count($previous_balances) - 2];
+} elseif (count($previous_balances) === 1) {
+    $previous_before_last = $previous_balances[0];
+}
 
 // Show debug information - hidden in HTML comment
 echo "<!-- \n";
 echo "Database values: \n";
-echo "owed_amount: " . $current_balance['owed_amount'] . "\n";
-echo "advance_payment: " . $current_balance['advance_payment'] . "\n\n";
+echo "owed_amount: " . $owed_amount . "\n";
+echo "advance_payment: " . $advance_payment . "\n\n";
 
 echo "Calculated values: \n";
 echo "credit_amount: " . $calculated_balance['credit_amount'] . "\n";
@@ -98,7 +121,7 @@ echo "<!-- \n";
 echo "Final calculated values: \n";
 echo "owed_amount: " . $owed_amount . "\n";
 echo "advance_payment: " . $advance_payment . "\n";
-echo "balance: " . $balance . "\n";
+echo "balance: " . $final_balance . "\n";
 echo "-->\n";
 
 
@@ -227,14 +250,21 @@ header('Content-Type: text/html; charset=utf-8');
                     </tr>
                 <?php endforeach; ?>
                 <tr class="table-info">
-                    <td colspan="3" class="text-end"><strong>باڵانسی کۆتایی</strong></td>
+                    <td colspan="3" class="text-end">
+                        <strong>
+                            <?php if ($previous_before_last !== null): ?>
+                                باڵانسی پێش کۆتا: <?php echo number_format($previous_before_last); ?> د.ع<br>
+                            <?php endif; ?>
+                            باڵانسی کۆتایی:
+                        </strong>
+                    </td>
                     <td colspan="3">
                         <strong>
-                            <?php if ($balance > 0): ?>
-                                <?php echo number_format($balance); ?> د.ع
+                            <?php if ($final_balance > 0): ?>
+                                <?php echo number_format($final_balance); ?> د.ع
                                 <span class="text-danger">(قەرزارە)</span>
-                            <?php elseif ($balance < 0): ?>
-                                <?php echo number_format(abs($balance)); ?> د.ع
+                            <?php elseif ($final_balance < 0): ?>
+                                <?php echo number_format(abs($final_balance)); ?> د.ع
                                 <span class="text-success">(پارەی پێشەکی)</span>
                             <?php else: ?>
                                 0 د.ع
@@ -244,20 +274,6 @@ header('Content-Type: text/html; charset=utf-8');
                 </tr>
                 </tbody>
             </table>
-            <div class="mt-4 text-end">
-                <strong>
-                    باڵانسی کۆتایی: 
-                    <?php if ($balance > 0): ?>
-                        <?php echo number_format($balance); ?> د.ع
-                        <span class="text-danger">(قەرزارە)</span>
-                    <?php elseif ($balance < 0): ?>
-                        <?php echo number_format(abs($balance)); ?> د.ع
-                        <span class="text-success">(پارەی پێشەکی)</span>
-                    <?php else: ?>
-                        0 د.ع
-                    <?php endif; ?>
-                </strong>
-            </div>
         </div>
         <div class="button-container">
             <button class="action-button" onclick="window.print()">

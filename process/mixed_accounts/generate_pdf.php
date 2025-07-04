@@ -126,6 +126,64 @@ error_log("Customer transactions balance: " . $customer_balance);
 error_log("Supplier transactions balance: " . $supplier_balance);
 error_log("they_owe: " . $they_owe . ", they_advance: " . $they_advance . ", we_owe: " . $we_owe . ", we_advance: " . $we_advance);
 
+// We'll show two balances: customer and supplier, depending on direction/type
+$final_customer_balance = max(0, $they_owe - $they_advance);
+$final_supplier_balance = max(0, $we_owe - $we_advance);
+$prev_customer_balances = [];
+$prev_supplier_balances = [];
+$curr_customer_balance = $final_customer_balance;
+$curr_supplier_balance = $final_supplier_balance;
+for ($i = count($transactions) - 1; $i >= 0; $i--) {
+    $t = $transactions[$i];
+    // Store balances before this transaction
+    $prev_customer_balances[$i] = $curr_customer_balance;
+    $prev_supplier_balances[$i] = $curr_supplier_balance;
+    // Undo this transaction for next iteration
+    if ($t['direction'] === 'sale') {
+        if ($t['type'] === 'credit') {
+            $curr_customer_balance -= $t['amount'];
+        } elseif ($t['type'] === 'collection' || $t['type'] === 'payment') {
+            $curr_customer_balance += $t['amount'];
+        } elseif ($t['type'] === 'advance') {
+            $curr_customer_balance += $t['amount'];
+        } elseif ($t['type'] === 'advance_refund') {
+            $curr_customer_balance -= $t['amount'];
+        }
+    } elseif ($t['direction'] === 'purchase') {
+        if ($t['type'] === 'credit') {
+            $curr_supplier_balance -= $t['amount'];
+        } elseif ($t['type'] === 'payment' || $t['type'] === 'collection') {
+            $curr_supplier_balance += $t['amount'];
+        } elseif ($t['type'] === 'advance') {
+            $curr_supplier_balance += $t['amount'];
+        } elseif ($t['type'] === 'advance_collection') {
+            $curr_supplier_balance -= $t['amount'];
+        }
+    }
+}
+
+$previous_before_last = null;
+if (count($transactions) > 1) {
+    $last = count($transactions) - 2;
+    $t = $transactions[$last];
+    if ($t['direction'] === 'sale') {
+        $previous_before_last = $prev_customer_balances[$last];
+    } elseif ($t['direction'] === 'purchase') {
+        $previous_before_last = $prev_supplier_balances[$last];
+    } else {
+        $previous_before_last = null;
+    }
+} elseif (count($transactions) === 1) {
+    $t = $transactions[0];
+    if ($t['direction'] === 'sale') {
+        $previous_before_last = $prev_customer_balances[0];
+    } elseif ($t['direction'] === 'purchase') {
+        $previous_before_last = $prev_supplier_balances[0];
+    } else {
+        $previous_before_last = null;
+    }
+}
+
 header('Content-Type: text/html; charset=utf-8');
 ?>
 <!DOCTYPE html>
@@ -245,104 +303,43 @@ header('Content-Type: text/html; charset=utf-8');
                     </tr>
                 <?php endforeach; ?>
                 <tr class="table-info">
-                    <td colspan="4" class="text-end"><strong>باڵانسی کۆتایی</strong></td>
+                    <td colspan="4" class="text-end">
+                        <strong>
+                            <?php if ($previous_before_last !== null): ?>
+                                باڵانسی پێش کۆتا مامەڵە: <?php echo number_format($previous_before_last); ?> د.ع<br>
+                            <?php endif; ?>
+                         
+                        </strong>
+                    </td>
                     <td colspan="3">
                         <strong>
                             <?php 
-                            // Use the actual database values directly for final balance
-                            // Don't recalculate based on transactions since the database already has the correct values
-                            
-                            // Calculate customer balance (they owe us minus their advance)
-                            $final_customer_balance = max(0, $they_owe - $they_advance);
-                            
-                            // Calculate supplier balance (we owe them minus our advance)
-                            $final_supplier_balance = max(0, $we_owe - $we_advance);
-                            
-                            // Calculate remaining advances after applying to outstanding balances
-                            $remaining_they_advance = $they_advance > $they_owe ? $they_advance - $they_owe : 0;
-                            $remaining_we_advance = $we_advance > $we_owe ? $we_advance - $we_owe : 0;
-                            
-                            // Display final balances
+                            // Display final balances as before
                             if ($final_customer_balance > 0): ?>
-                                <div class="mb-2">
-                                    <?php echo number_format($final_customer_balance); ?> د.ع
-                                    <span class="text-danger">(قەرزارە)</span>
-                                </div>
+                               باڵانسی کۆتایی:
+                                <?php echo number_format($final_customer_balance); ?> د.ع
+                                <span class="text-danger">(قەرزارە)</span>
                             <?php endif;
-                            
                             if ($final_supplier_balance > 0): ?>
-                                <div>
-                                    <?php echo number_format($final_supplier_balance); ?> د.ع
-                                    <span class="text-danger">(قەرزارم)</span>
-                                </div>
+                                <?php echo number_format($final_supplier_balance); ?> د.ع
+                                <span class="text-danger">(قەرزارم)</span>
                             <?php endif;
-                            
-                            // Show remaining advances if any
                             if ($remaining_they_advance > 0): ?>
-                                <div>
-                                    <?php echo number_format($remaining_they_advance); ?> د.ع
-                                    <span class="text-success">(پێشەکی ئەوان)</span>
-                                </div>
+                                <?php echo number_format($remaining_they_advance); ?> د.ع
+                                <span class="text-success">(پێشەکی ئەوان)</span>
                             <?php endif;
-                            
                             if ($remaining_we_advance > 0): ?>
-                                <div>
-                                    <?php echo number_format($remaining_we_advance); ?> د.ع
-                                    <span class="text-success">(پێشەکی ئێمە)</span>
-                                </div>
+                                <?php echo number_format($remaining_we_advance); ?> د.ع
+                                <span class="text-success">(پێشەکی ئێمە)</span>
                             <?php endif;
-                            
-                            // If all balances are 0
-                            if ($final_customer_balance <= 0 && $final_supplier_balance <= 0 && 
-                                $remaining_they_advance <= 0 && $remaining_we_advance <= 0): ?>
-                                <div>0 د.ع</div>
+                            if ($final_customer_balance <= 0 && $final_supplier_balance <= 0 && $remaining_they_advance <= 0 && $remaining_we_advance <= 0): ?>
+                                0 د.ع
                             <?php endif; ?>
                         </strong>
                     </td>
                 </tr>
                 </tbody>
             </table>
-            <div class="mt-4 text-end">
-                <strong>
-                    باڵانسی کۆتایی: 
-                    <?php 
-                    // Display final balances again - use the same values calculated above
-                    if ($final_customer_balance > 0): ?>
-                        <div class="mb-2">
-                            <?php echo number_format($final_customer_balance); ?> د.ع
-                            <span class="text-danger">(قەرزارە)</span>
-                        </div>
-                    <?php endif;
-                    
-                    if ($final_supplier_balance > 0): ?>
-                        <div>
-                            <?php echo number_format($final_supplier_balance); ?> د.ع
-                            <span class="text-danger">(قەرزارم)</span>
-                        </div>
-                    <?php endif;
-                    
-                    // Show remaining advances if any
-                    if ($remaining_they_advance > 0): ?>
-                        <div>
-                            <?php echo number_format($remaining_they_advance); ?> د.ع
-                            <span class="text-success">(پێشەکی ئەوان)</span>
-                        </div>
-                    <?php endif;
-                    
-                    if ($remaining_we_advance > 0): ?>
-                        <div>
-                            <?php echo number_format($remaining_we_advance); ?> د.ع
-                            <span class="text-success">(پێشەکی ئێمە)</span>
-                        </div>
-                    <?php endif;
-                    
-                    // If all balances are 0
-                    if ($final_customer_balance <= 0 && $final_supplier_balance <= 0 && 
-                        $remaining_they_advance <= 0 && $remaining_we_advance <= 0): ?>
-                        <div>0 د.ع</div>
-                    <?php endif; ?>
-                </strong>
-            </div>
         </div>
         <div class="button-container">
             <button class="action-button" onclick="window.print()">
