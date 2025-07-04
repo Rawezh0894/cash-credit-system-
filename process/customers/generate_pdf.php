@@ -253,14 +253,15 @@ header('Content-Type: text/html; charset=utf-8');
                     <td colspan="3" class="text-end">
                         <strong>
                             <?php if ($previous_before_last !== null): ?>
-                                باڵانسی پێش کۆتا: <?php echo number_format($previous_before_last); ?> د.ع<br>
+                                باڵانسی پێش کۆتا مامەڵە: <?php echo number_format($previous_before_last); ?> د.ع<br>
                             <?php endif; ?>
-                            باڵانسی کۆتایی:
+                           
                         </strong>
                     </td>
                     <td colspan="3">
                         <strong>
                             <?php if ($final_balance > 0): ?>
+                                باڵانسی کۆتایی:
                                 <?php echo number_format($final_balance); ?> د.ع
                                 <span class="text-danger">(قەرزارە)</span>
                             <?php elseif ($final_balance < 0): ?>

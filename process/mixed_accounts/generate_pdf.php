@@ -321,14 +321,17 @@ header('Content-Type: text/html; charset=utf-8');
                                 <span class="text-danger">(قەرزارە)</span>
                             <?php endif;
                             if ($final_supplier_balance > 0): ?>
+                              باڵانسی کۆتایی:
                                 <?php echo number_format($final_supplier_balance); ?> د.ع
                                 <span class="text-danger">(قەرزارم)</span>
                             <?php endif;
                             if ($remaining_they_advance > 0): ?>
+                              باڵانسی کۆتایی:
                                 <?php echo number_format($remaining_they_advance); ?> د.ع
                                 <span class="text-success">(پێشەکی ئەوان)</span>
                             <?php endif;
                             if ($remaining_we_advance > 0): ?>
+                              باڵانسی کۆتایی:
                                 <?php echo number_format($remaining_we_advance); ?> د.ع
                                 <span class="text-success">(پێشەکی ئێمە)</span>
                             <?php endif;
